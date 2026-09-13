@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kubectl get interview --ready</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --canvas:#ffffff; --canvas-soft:#f6f9fc; --canvas-cream:#f5e9d4;
+    --hairline:#e3e8ee; --hairline-soft:#eef2f6; --hairline-input:#a8c3de;
+    --ink:#0d253d; --ink-2:#273951; --ink-mute:#64748d; --ink-faint:#98a4b8;
+    --on-primary:#ffffff;
+    --primary:#533afd; --primary-deep:#4434d4; --primary-press:#2e2b8c; --primary-soft:#665efd; --primary-subdued:#b9b9f9;
+    --primary-tint:rgba(83,58,253,.10); --primary-tint-strong:rgba(83,58,253,.16);
+    --brand-dark:#1c1e54; --brand-dark-2:#14163f; --brand-dark-3:#101235;
+    --ruby:#ea2261; --ruby-deep:#9c1547; --ruby-tint:rgba(234,34,97,.12);
+    --lemon:#9b6829; --lemon-tint:rgba(155,104,41,.12);
+    --magenta:#f96bee;
+    --pill:9999px; --radius-xs:4px; --radius-sm:6px; --radius-md:8px; --radius-lg:12px; --radius-xl:16px;
+    --shadow-1:0 1px 3px rgba(0,55,112,.10);
+    --shadow-2:0 8px 24px rgba(0,55,112,.10), 0 2px 6px rgba(0,55,112,.05);
+    --focus:var(--primary);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--canvas-soft); color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif; font-weight:300;
+    font-feature-settings:"ss01" 1;
+    font-size:15px; line-height:1.4; -webkit-font-smoothing:antialiased;
+  }
+  code,pre,.mono{font-family:'JetBrains Mono',ui-monospace,monospace;}
+  h1,h2,h3{text-wrap:balance; margin:0; font-family:'Inter',system-ui,sans-serif; font-weight:300;}
+  .tnum{font-feature-settings:"ss01" 1,"tnum" 1; font-variant-numeric:tabular-nums;}
+  ::selection{background:var(--primary-tint-strong);}
+  a{color:var(--primary);}
+  button{font-family:inherit;}
+  button:focus-visible, .navitem:focus-visible, input:focus-visible{outline:2px solid var(--primary); outline-offset:2px;}
+  @media (max-width:480px){ #appbar .t2{display:none;} .home-btn{padding:8px 14px;} }
+
+  #rail{position:sticky; top:0; z-index:30; height:3px; background:var(--hairline);}
+  #rail-fill{height:100%; width:0%; background:var(--primary); transition:width .35s ease;}
+
+  #appbar{
+    display:flex; align-items:center; gap:13px; padding:15px 24px; background:var(--canvas);
+    border-bottom:1px solid var(--hairline); position:sticky; top:3px; z-index:29; overflow:hidden;
+  }
+  #appbar::before{
+    content:""; position:absolute; inset:0; z-index:-1; opacity:.5;
+    background:
+      radial-gradient(35% 140% at 8% 50%, rgba(245,233,212,.9), transparent 75%),
+      radial-gradient(30% 140% at 30% 20%, rgba(155,104,41,.22), transparent 75%),
+      radial-gradient(35% 160% at 55% 60%, rgba(102,94,253,.28), transparent 75%),
+      radial-gradient(30% 140% at 78% 30%, rgba(83,58,253,.24), transparent 75%),
+      radial-gradient(28% 140% at 96% 55%, rgba(234,34,97,.16), transparent 75%);
+  }
+  .brand-home{
+    display:flex; align-items:center; gap:13px; border:none; background:none; cursor:pointer; padding:4px 6px 4px 0;
+    border-radius:var(--radius-sm); transition:opacity .15s ease;
+  }
+  .brand-home:hover{opacity:.75;}
+  #appbar .mark-icon{
+    width:36px; height:36px; border-radius:var(--radius-sm); background:var(--primary); color:var(--on-primary);
+    display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; font-weight:600; font-size:15px; flex:none;
+  }
+  #appbar .titles{display:flex; flex-direction:column; gap:1px; text-align:left;}
+  #appbar .t1{font-size:16px; font-weight:500; letter-spacing:-.1px; color:var(--ink);}
+  #appbar .t2{font-size:12px; color:var(--ink-mute); font-family:'JetBrains Mono';}
+  .appbar-spacer{flex:1;}
+  .home-btn{padding:8px 18px; font-size:13.5px;}
+
+  #shell{display:grid; grid-template-columns:280px 1fr; min-height:100vh;}
+  @media (max-width:880px){ #shell{grid-template-columns:1fr;} #sidebar{position:static; height:auto;} }
+
+  #sidebar{
+    position:sticky; top:67px; align-self:start; height:calc(100vh - 67px);
+    overflow-y:auto; background:var(--canvas); border-right:1px solid var(--hairline);
+    padding:14px 12px 28px;
+  }
+
+  #overall{padding:12px 12px 16px; margin-bottom:6px;}
+  #overall .label{display:flex; justify-content:space-between; font-family:'JetBrains Mono'; font-size:11px; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px;}
+  #overall .bar{height:6px; border-radius:var(--pill); background:var(--hairline-soft); overflow:hidden;}
+  #overall .bar-fill{height:100%; border-radius:var(--pill); background:var(--primary); width:0%; transition:width .35s ease;}
+
+  .navgroup-title{
+    font-family:'JetBrains Mono'; font-size:11px; color:var(--ink-faint); text-transform:uppercase;
+    letter-spacing:.7px; padding:16px 14px 6px; display:flex; gap:6px; align-items:baseline;
+  }
+  .navitem{
+    display:flex; align-items:center; gap:11px; width:100%; text-align:left; border:none; background:none; cursor:pointer;
+    color:var(--ink-mute); font:inherit; font-weight:400; font-size:13.5px; padding:9px 14px; border-radius:var(--pill);
+    transition:background .15s ease;
+  }
+  .navitem:hover{background:var(--canvas-soft);}
+  .navitem.active{background:var(--primary-subdued); color:var(--primary-deep); font-weight:500;}
+  .navitem .mark{width:16px; height:16px; border-radius:50%; border:1.5px solid var(--ink-faint); flex:none; display:flex; align-items:center; justify-content:center;}
+  .navitem.active .mark{border-color:var(--primary-deep);}
+  .navitem.done .mark{background:var(--primary); border-color:var(--primary);}
+  .navitem.done .mark::after{content:"✓"; font-size:9px; color:var(--on-primary); font-weight:700;}
+  .navitem .t{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .navitem.static{color:var(--ink-mute);}
+  .navitem.static .mark{border-style:dashed;}
+
+  #main{padding:34px 40px 90px; max-width:760px;}
+  #main.wide{max-width:1560px;}
+  @media (max-width:880px){ #main{padding:24px 18px 70px;} }
+
+  .qgrid{display:grid; grid-template-columns:minmax(0,0.8fr) minmax(0,1.2fr); gap:26px; align-items:start;}
+  .qright{position:sticky; top:20px;}
+  @media (max-width:1080px){
+    .qgrid{grid-template-columns:1fr;}
+    .qright{position:static;}
+  }
+
+  details.coderef{border-radius:var(--radius-lg); overflow:hidden; margin-bottom:14px; background:var(--canvas); border:1px solid var(--hairline);}
+  details.coderef summary{
+    cursor:pointer; padding:13px 20px; font-family:'JetBrains Mono'; font-size:11px; text-transform:uppercase;
+    letter-spacing:.6px; color:var(--ink-mute); list-style:none; display:flex; justify-content:space-between; align-items:center;
+  }
+  details.coderef summary::-webkit-details-marker{display:none;}
+  details.coderef summary::after{content:"show"; color:var(--primary); font-weight:600;}
+  details.coderef[open] summary::after{content:"hide";}
+  details.coderef .inner{padding:0 20px 18px;}
+
+  .eyebrow{display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .tag{font-family:'JetBrains Mono'; font-size:11px; letter-spacing:.4px; padding:5px 12px; border-radius:var(--pill); border:1px solid var(--hairline); color:var(--ink-mute); background:var(--canvas);}
+  .tag.mod{color:var(--primary-deep); border-color:transparent; background:var(--primary-subdued);}
+  .tag.hot{color:var(--ruby-deep); border-color:transparent; background:var(--ruby-tint);}
+  .tag.num{font-family:'JetBrains Mono'; color:var(--ink-faint); border-color:transparent; background:none; padding-left:0; font-feature-settings:"tnum" 1;}
+
+  h2.qtitle{font-size:29px; font-weight:300; margin-bottom:22px; letter-spacing:-.3px; color:var(--ink);}
+
+  .panel{background:var(--canvas); border:1px solid var(--hairline); border-radius:var(--radius-lg); padding:22px 24px; margin-bottom:18px; box-shadow:var(--shadow-1);}
+  .panel-label{font-family:'JetBrains Mono'; font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--ink-mute); margin-bottom:12px; display:flex; align-items:center; gap:7px; font-weight:500;}
+  .panel-label .prompt{color:var(--primary);}
+
+  .approach{background:var(--canvas-cream); border-color:transparent; box-shadow:none;}
+  .approach .panel-label{color:var(--lemon);}
+  .approach p{margin:0 0 10px; color:var(--ink); font-weight:400;}
+  .approach p:last-child{margin-bottom:0;}
+  .approach strong{color:var(--primary-deep); font-weight:600;}
+
+  .hook{background:var(--canvas); box-shadow:var(--shadow-1); margin-bottom:18px; border:1px solid var(--hairline); border-left:4px solid var(--lemon);}
+  .hook .panel-label{color:var(--lemon);}
+  .hook p{margin:0; color:var(--ink); font-size:14.5px; font-weight:400;}
+
+  pre.code{
+    margin:0; padding:16px 18px; background:var(--canvas-soft); border-radius:var(--radius-md);
+    overflow-x:auto; font-size:13px; line-height:1.6; color:var(--ink);
+  }
+  .c-kw{color:var(--primary); font-weight:500;} .c-str{color:var(--lemon);} .c-com{color:var(--ink-faint); font-style:italic;} .c-num{color:var(--ruby-deep);}
+
+  .ide{border-radius:var(--radius-lg); overflow:hidden; margin-bottom:8px; box-shadow:var(--shadow-2); border:1px solid #000;}
+  .ide-head{display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:#0a0a0c; border-bottom:1px solid rgba(255,255,255,.09);}
+  .ide-head .fname{font-family:'JetBrains Mono'; font-size:12px; color:#8b8fa8;}
+  .ide-actions{display:flex; align-items:center; gap:8px;}
+  .ide-btn{
+    font:inherit; font-size:12px; font-weight:500; padding:6px 13px; border-radius:var(--pill); cursor:pointer;
+    border:1px solid rgba(255,255,255,.16); background:transparent; color:#a8adc4; transition:background .15s ease, color .15s ease;
+  }
+  .ide-btn:hover{background:rgba(255,255,255,.08); color:#fff;}
+  .ide-btn:active{transform:scale(.96);}
+  .run-btn{display:inline-flex; align-items:center; gap:7px; font:inherit; font-size:12.5px; font-weight:500; padding:7px 16px 7px 13px; border-radius:var(--pill); border:none; background:var(--primary); color:var(--on-primary); cursor:pointer; transition:transform .1s ease, background .15s ease;}
+  .run-btn:hover{background:var(--primary-deep);}
+  .run-btn:active{transform:scale(.96); background:var(--primary-press);}
+  .run-btn .tri{width:0; height:0; border-top:5px solid transparent; border-bottom:5px solid transparent; border-left:7px solid currentColor; flex:none;}
+  .editor-row{display:flex; background:#000000; align-items:stretch;}
+  .gutter{user-select:none; text-align:right; padding:14px 10px; color:#585c70; font-family:'JetBrains Mono'; font-size:13.5px; line-height:1.7; background:#000000; border-right:1px solid rgba(255,255,255,.08); white-space:pre; overflow:hidden; font-feature-settings:"tnum" 1;}
+  textarea.editor{
+    flex:1; resize:vertical; height:460px; min-height:280px; border:none; outline:none; background:#000000 !important; color:#e8e9f0 !important;
+    font-family:'JetBrains Mono'; font-size:14px; line-height:1.7; padding:14px 16px; white-space:pre; overflow:auto; tab-size:4;
+  }
+  textarea.editor::selection, .term::selection{ background:rgba(102,94,253,.55); color:#ffffff; }
+  textarea.editor::-moz-selection, .term::-moz-selection{ background:rgba(102,94,253,.55); color:#ffffff; }
+  .term{background:#000000; border-top:1px solid rgba(255,255,255,.09); padding:12px 16px; font-family:'JetBrains Mono'; font-size:13px; color:#c3c6d6; min-height:90px; max-height:320px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;}
+  .term .prompt-line{color:#8f89ff; display:block; margin-bottom:2px;}
+  .term .err{color:#ff7fae;}
+  .run-caveat, .run-note{font-size:12.5px; color:var(--ink-faint); margin:8px 0 18px; font-style:italic; padding:0 2px;}
+  .cant-run{border-radius:var(--radius-md); padding:14px 17px; font-size:13px; color:var(--ink-mute); margin-bottom:18px; background:var(--canvas-soft); border:1px solid var(--hairline);}
+  .cant-run b{color:var(--ink);}
+
+  .practice input[type=text], .practice input[type=number]{
+    width:100%; background:var(--canvas); border:1.5px solid var(--hairline-input); color:var(--ink);
+    font-family:'JetBrains Mono'; font-size:14px; padding:11px 14px; border-radius:var(--radius-sm); margin-top:4px;
+    transition:border-color .15s ease;
+  }
+  .practice input:focus{outline:none; border-color:var(--primary);}
+  .practice .q-prompt{margin-bottom:10px; color:var(--ink); font-weight:400;}
+  .mcq-opt{display:flex; gap:11px; align-items:flex-start; padding:12px 14px; border:1.5px solid var(--hairline); border-radius:var(--radius-sm); margin-bottom:9px; cursor:pointer; background:var(--canvas); transition:background .15s ease, border-color .15s ease;}
+  .mcq-opt:hover{background:var(--primary-tint);}
+  .mcq-opt:has(input:checked){background:var(--primary-subdued); border-color:var(--primary); color:var(--primary-deep);}
+  .mcq-opt input{margin-top:3px; accent-color:var(--primary);}
+  .btnrow{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap;}
+  button.btn{
+    font:inherit; font-size:15px; font-weight:400; padding:8px 16px; border-radius:var(--pill); cursor:pointer;
+    border:1.5px solid var(--hairline); background:var(--canvas); color:var(--ink);
+    transition:transform .1s ease, background .15s ease, box-shadow .15s ease;
+  }
+  button.btn:hover{background:var(--canvas-soft);}
+  button.btn:active{transform:scale(.97);}
+  button.btn.primary{background:var(--primary); border-color:var(--primary); color:var(--on-primary); box-shadow:var(--shadow-1);}
+  button.btn.primary:hover{background:var(--primary-deep); border-color:var(--primary-deep);}
+  button.btn.primary:active{background:var(--primary-press); border-color:var(--primary-press);}
+  button.btn.ghost{background:var(--canvas); color:var(--primary); border-color:var(--primary);}
+  button.btn.ghost:hover{background:var(--primary-tint);}
+  button.btn:disabled{opacity:.4; cursor:not-allowed; transform:none;}
+
+  .feedback{margin-top:14px; padding:13px 16px; border-radius:var(--radius-sm); font-size:13.5px; display:none;}
+  .feedback.show{display:block;}
+  .feedback.ok{background:var(--primary-tint-strong); color:var(--primary-deep);}
+  .feedback.bad{background:var(--ruby-tint); color:var(--ruby-deep);}
+  .feedback .fb-title{font-weight:600; display:block; margin-bottom:3px;}
+
+  details.solution{border-radius:var(--radius-lg); padding:0; margin-bottom:18px; overflow:hidden; box-shadow:var(--shadow-1); background:var(--canvas); border:1px solid var(--hairline);}
+  details.solution summary{
+    cursor:pointer; padding:15px 22px; font-family:'JetBrains Mono'; font-size:12px; text-transform:uppercase;
+    letter-spacing:.6px; color:var(--ink-mute); list-style:none; display:flex; justify-content:space-between; align-items:center;
+  }
+  details.solution summary::-webkit-details-marker{display:none;}
+  details.solution summary::after{content:"show"; color:var(--primary); font-weight:600;}
+  details.solution[open] summary::after{content:"hide";}
+  details.solution .inner{padding:6px 22px 22px;}
+  details.solution ul{margin:12px 0 0; padding-left:20px; color:var(--ink-mute); font-size:13.5px;}
+  details.solution li{margin-bottom:6px;}
+
+  .navfoot{display:flex; justify-content:space-between; align-items:center; margin-top:26px; gap:10px;}
+
+  .mesh-hero{position:relative; overflow:hidden; border-radius:var(--radius-xl); padding:56px 40px; margin-bottom:26px;}
+  .mesh-hero::before{
+    content:""; position:absolute; inset:0; z-index:-1;
+    background:
+      radial-gradient(45% 75% at 10% 20%, rgba(245,233,212,.95), transparent 70%),
+      radial-gradient(40% 65% at 32% 8%, rgba(155,104,41,.4), transparent 70%),
+      radial-gradient(55% 80% at 55% 35%, rgba(102,94,253,.55), transparent 70%),
+      radial-gradient(48% 70% at 78% 12%, rgba(83,58,253,.6), transparent 70%),
+      radial-gradient(42% 65% at 94% 45%, rgba(234,34,97,.4), transparent 70%),
+      radial-gradient(36% 55% at 68% 65%, rgba(249,107,238,.3), transparent 70%),
+      #ffffff;
+  }
+  .hero{margin-bottom:0;}
+  .hero h1{font-size:40px; font-weight:300; margin-bottom:12px; letter-spacing:-.8px; color:var(--ink); line-height:1.08;}
+  .hero .sub{color:var(--ink-2); font-size:16px; max-width:58ch; font-weight:400;}
+  .kv{display:grid; grid-template-columns:1fr; gap:12px; margin-top:26px;}
+  @media (min-width:600px){ .kv{grid-template-columns:1fr 1fr;} }
+  .kv .cell{background:var(--canvas); border-radius:var(--radius-lg); padding:18px 20px; box-shadow:var(--shadow-2);}
+  .kv .cell .n{font-family:'JetBrains Mono'; font-size:26px; font-weight:600; color:var(--primary); font-feature-settings:"tnum" 1; font-variant-numeric:tabular-nums;}
+  .kv .cell .l{font-size:12.5px; color:var(--ink-mute); margin-top:2px;}
+
+  ol.steps, ul.plain{padding-left:22px; color:var(--ink);}
+  ol.steps li, ul.plain li{margin-bottom:10px;}
+  ol.steps strong{color:var(--primary-deep); font-weight:600;}
+
+  table.tools{width:100%; border-collapse:collapse; margin-top:6px;}
+  table.tools th, table.tools td{text-align:left; padding:12px 14px; border-bottom:1px solid var(--hairline); font-size:13.5px; vertical-align:top;}
+  table.tools th{color:var(--ink-faint); font-family:'JetBrains Mono'; font-size:11px; text-transform:uppercase; letter-spacing:.5px;}
+  table.tools a{color:var(--primary); text-decoration:none; font-weight:500;}
+  table.tools a:hover{text-decoration:underline;}
+  .wrap-table{overflow-x:auto;}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+
+<div id="rail"><div id="rail-fill"></div></div>
+<header id="appbar">
+  <button class="brand-home" onclick="goHome()" aria-label="Go to home">
+    <span class="mark-icon">&gt;_</span>
+    <span class="titles">
+      <span class="t1">DevOps Python Drill</span>
+      <span class="t2">devops-python-drill · interview prep</span>
+    </span>
+  </button>
+  <div class="appbar-spacer"></div>
+  <button class="btn ghost home-btn" onclick="goHome()">Home</button>
+</header>
+<div id="shell">
+  <nav id="sidebar">
+    <div id="overall">
+      <div class="label"><span>Progress</span><span id="overall-count" class="tnum">0 / 26</span></div>
+      <div class="bar"><div class="bar-fill" id="overall-bar"></div></div>
+    </div>
+    <div id="navlist"></div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<script>
+/* ---------- content ---------- */
+const GROUPS = [
+  {title:"start here", items:["intro"]},
+  {title:"basics & files", items:["q1","q2","q3","q4","q5","q6","q7","q7b"]},
+  {title:"errors & oop", items:["q8","q9","q10","q11","q11b"]},
+  {title:"real devops patterns", items:["q12","q13","q14","q15"]},
+  {title:"modules: os / sys / env", items:["q16","q17","q18","q24"]},
+  {title:"apis & regex", items:["q19","q20","q21","q22"]},
+  {title:"combined & bonus", items:["q23","q25","qbonus"]},
+  {title:"commonly missed", items:["q26","q27","q28","q29","q30","q31"]},
+  {title:"reference", items:["cheatsheet","tools","history"]}
+];
+
+const QUESTIONS = [
+{id:"q1", module:"File handling", hot:true, title:"Count ERROR lines in a log file",
+ approach:`<p>This is <strong>grep -c 'ERROR' app.log</strong> wearing a Python costume. Say it out loud: "I open the file, walk through it line by line, and every time I see ERROR in that line, I bump a counter."</p>
+ <p>Name the three moves the interviewer is listening for: <strong>open → loop → count</strong>. Also mention that <code>with open(...)</code> auto-closes the file even if something goes wrong &mdash; a free point most beginners forget to say.</p>`,
+ code:`# app.log
+INFO Start
+ERROR DB Down
+INFO Retry
+ERROR Timeout
+
+count = 0
+with open("app.log") as file:
+    for line in file:
+        if "ERROR" in line:
+            count += 1
+
+print(f"Total Errors: {count}")`,
+ runnable:`log_text = """INFO Start
+ERROR DB Down
+INFO Retry
+ERROR Timeout"""
+
+count = 0
+for line in log_text.splitlines():
+    if "ERROR" in line:
+        count += 1
+
+print(f"Total Errors: {count}")`,
+ runNote:"Adapted: reads from a string here instead of a real file, since there's no disk in this sandbox. with open(...) works identically against a real file.",
+ autoGrade:"output",
+ type:"number", prompt:"Given the log shown above, what number does this script print?", answer:2,
+ hint:"Recount by hand: how many of the 4 lines contain the substring ERROR?",
+ solution:`count = 0
+with open("app.log") as file:
+    for line in file:
+        if "ERROR" in line:
+            count += 1
+print(f"Total Errors: {count}")  # Total Errors: 2`,
+ why:["<code>with open()</code> closes the file automatically, even if an error happens mid-loop.","<code>in</code> does a substring check &mdash; it doesn't need ERROR to be the whole line.","This open → loop → count shape reappears in almost every log-parsing question."],
+ memoryHook:"open → loop → count. Say those three words and you can rebuild this from scratch every time it comes up."},
+
+{id:"q2", module:"Lists & dicts", title:"Print only the running servers",
+ approach:`<p>In bash you might reach for <strong>jq '.[] | select(.status=="running") | .host'</strong>. That <code>select()</code> is just an <code>if</code> inside a loop in Python &mdash; and each server here is a dictionary, exactly like one row out of <code>kubectl get pods -o json</code>.</p>
+ <p>Talk track: "I loop over the list, each item is a dict, I check the status key, and if it matches I print the host key."</p>`,
+ code:`servers = [
+    {"host": "web1", "status": "running"},
+    {"host": "web2", "status": "stopped"},
+    {"host": "web3", "status": "running"}
+]
+
+for server in servers:
+    if server["status"] == "running":
+        print(server["host"])`,
+ runnable:`servers = [
+    {"host": "web1", "status": "running"},
+    {"host": "web2", "status": "stopped"},
+    {"host": "web3", "status": "running"}
+]
+
+for server in servers:
+    if server["status"] == "running":
+        print(server["host"])`,
+ autoGrade:"output",
+ type:"list", prompt:"Type the hostnames that get printed, in order, separated by commas.", answer:["web1","web3"],
+ hint:"web2's status is \"stopped\", not \"running\" — only two of the three servers pass the check.",
+ solution:`for server in servers:
+    if server["status"] == "running":
+        print(server["host"])
+# web1
+# web3`,
+ why:["Square brackets <code>server[\"status\"]</code> read a dictionary key &mdash; not an attribute.","This is the most common shape for parsing any cloud API list response."],
+ memoryHook:"A dict from an API is just a labeled row — server[\"status\"] is you asking 'what's in the status column of this row?'"},
+
+{id:"q3", module:"Strings", title:"Extract the IP address from each log line",
+ approach:`<p>Same job as <strong>awk '{print $1}'</strong> on each line. <code>.split()</code> with no arguments splits on any whitespace, so <code>log.split()[0]</code> grabs the first word &mdash; here, the IP.</p>
+ <p>Talk track: "I loop through each log line, split it into words, and take the first word."</p>`,
+ code:`logs = [
+    "10.0.0.1 connected",
+    "10.0.0.2 disconnected",
+    "10.0.0.3 connected"
+]
+
+ips = []
+for log in logs:
+    ip = log.split()[0]
+    ips.append(ip)
+
+print(ips)`,
+ runnable:`logs = [
+    "10.0.0.1 connected",
+    "10.0.0.2 disconnected",
+    "10.0.0.3 connected"
+]
+
+ips = []
+for log in logs:
+    ip = log.split()[0]
+    ips.append(ip)
+
+print(ips)`,
+ autoGrade:"output",
+ type:"list", prompt:"Type the resulting ips list, in order, comma-separated.", answer:["10.0.0.1","10.0.0.2","10.0.0.3"],
+ hint:"log.split()[0] takes the first whitespace-separated word of each line — that's always the IP here.",
+ solution:`ips = []
+for log in logs:
+    ip = log.split()[0]
+    ips.append(ip)
+print(ips)  # ['10.0.0.1', '10.0.0.2', '10.0.0.3']`,
+ why:["<code>.split()</code> with no argument splits on any run of whitespace, not just single spaces.","Index <code>[0]</code> means 'the first item of the resulting list of words.'"],
+ memoryHook:".split()[0] = 'give me the first word' — the exact same move as awk '{print $1}'."},
+
+{id:"q4", module:"Functions", title:"Write a CPU alert function",
+ approach:`<p>This is the Python version of a bash health check: <strong>if [ $cpu -gt 80 ]; then echo High; fi</strong>. The interviewer is really checking <code>return</code> vs <code>print</code> &mdash; a function should <em>return</em> a value so the caller decides what to do with it, instead of just printing.</p>
+ <p>Talk track: "I wrap the threshold check in a function so it's reusable, and I return a string instead of printing it, so whoever calls this can decide what happens next."</p>`,
+ code:`def check_cpu(cpu):
+    if cpu > 80:
+        return "High CPU Usage"
+    return "CPU Normal"
+
+print(check_cpu(90))   # High CPU Usage
+print(check_cpu(75))   # ?`,
+ runnable:`def check_cpu(cpu):
+    if cpu > 80:
+        return "High CPU Usage"
+    return "CPU Normal"
+
+print(check_cpu(90))
+print(check_cpu(75))`,
+ autoGrade:"output",
+ type:"text", prompt:"What does check_cpu(75) return?", answer:["cpunormal"],
+ hint:"75 is not greater than 80, so the if-block is skipped entirely — which line executes next?",
+ solution:`def check_cpu(cpu):
+    if cpu > 80:
+        return "High CPU Usage"
+    return "CPU Normal"
+
+print(check_cpu(75))  # CPU Normal`,
+ why:["Once a <code>return</code> runs, the function exits immediately.","Prefer <code>return</code> over <code>print</code> inside functions so the result stays usable by other code."],
+ memoryHook:"A function should return its answer, not print it — printing is the caller's decision, never the function's."},
+
+{id:"q5", module:"Dictionaries", title:"Read a value out of nested JSON",
+ approach:`<p>Exactly like drilling into <strong>kubectl get pod nginx -o json | jq .status.phase</strong> &mdash; each <code>[key]</code> is one level deeper into the JSON tree.</p>
+ <p>Talk track: "I go into data, find the pod key, then inside that dict I find status."</p>`,
+ code:`data = {
+    "pod": {
+        "name": "nginx",
+        "status": "Running"
+    }
+}
+
+print(data["pod"]["name"])
+print(data["pod"]["status"])`,
+ runnable:`data = {
+    "pod": {
+        "name": "nginx",
+        "status": "Running"
+    }
+}
+
+print(data["pod"]["name"])
+print(data["pod"]["status"])`,
+ type:"text", prompt:'Write the exact expression that reads the status value.', answer:['data["pod"]["status"]',"data['pod']['status']"],
+ hint:"Read left to right: go into data, then into pod, then read status.",
+ solution:`print(data["pod"]["status"])  # Running`,
+ why:["Each bracket pair is one step deeper into the nested structure &mdash; read left to right.","Identical to how you'll pull fields out of any JSON API response."],
+ memoryHook:"Each [key] is one elevator floor down into the JSON building."},
+
+{id:"q6", module:"JSON", title:"Read servers from a JSON file",
+ approach:`<p><code>json.load(file)</code> is your Python version of piping a file into <code>jq</code>. Watch the naming trap interviewers love: <strong>load</strong> (no s) reads from an open file object, <strong>loads</strong> (with an s, for "load string") reads from a string already in memory.</p>
+ <p>Talk track: "Since I have a file object, not a string, I use load without the s."</p>`,
+ code:`# servers.json
+{
+  "servers": [
+    {"hostname": "web1"},
+    {"hostname": "web2"}
+  ]
+}
+
+import json
+
+with open("servers.json") as file:
+    data = json.load(file)
+
+for server in data["servers"]:
+    print(server["hostname"])`,
+ runnable:`import json
+
+json_text = '{"servers": [{"hostname": "web1"}, {"hostname": "web2"}]}'
+data = json.loads(json_text)
+
+for server in data["servers"]:
+    print(server["hostname"])`,
+ runNote:"Adapted: json.loads on a string here — with a real file you'd use json.load(file) instead. Same distinction as the multiple choice below.",
+ type:"mcq", prompt:"Which function reads JSON directly from an already-open file object?",
+ options:["json.load(file)","json.loads(file)","json.dump(file)","json.dumps(file)"], answer:0,
+ hint:"You have a file object, not a string sitting in memory — which name matches 'from a file'?",
+ solution:`with open("servers.json") as file:
+    data = json.load(file)
+for server in data["servers"]:
+    print(server["hostname"])`,
+ why:["<code>load</code> = from a file. <code>loads</code> = from a string. <code>dump</code>/<code>dumps</code> go the other direction &mdash; Python object → JSON."],
+ memoryHook:"load = from a file. loads = 'load-string'. Say 'load-ESS' out loud and you'll never mix them up again."},
+
+{id:"q7", module:"Pythonic style", title:"Rewrite a loop as a list comprehension",
+ approach:`<p>This is Python's version of a one-line bash pipe. Interviewers ask this purely to check whether you know the shorthand for a "build an empty list, then append in a loop" pattern.</p>
+ <p>Talk track: "Instead of creating an empty list and appending inside a loop, I build the whole list in one line &mdash; same logic, more idiomatic Python."</p>`,
+ code:`servers = ["web1", "web2", "web3"]
+
+# traditional
+result = []
+for server in servers:
+    result.append(server.upper())`,
+ runnable:`servers = ["web1", "web2", "web3"]
+
+result = []
+for server in servers:
+    result.append(server.upper())
+print(result)
+
+# now try writing the one-line version below and print it too
+`,
+ type:"contains", prompt:"Type the one-line list comprehension that does the same thing as the loop above.",
+ mustContain:["forserverinservers",".upper()"],
+ hint:"The shape is always [expression for item in iterable] — put server.upper() where expression goes.",
+ solution:`result = [server.upper() for server in servers]
+print(result)  # ['WEB1', 'WEB2', 'WEB3']`,
+ why:["The shape is always <code>[expression for item in iterable]</code>.","Same logic as the loop, one line, considered more \"Pythonic\"."],
+ memoryHook:"[X for Y in Z] — three words in order: what, from-where, and (optionally) if-what-condition."},
+
+{id:"q7b", module:"Booleans & truthiness", hot:true, title:"Truthy, falsy, and is vs ==",
+ approach:`<p>Bash equivalent: <strong>[ -z "$var" ]</strong> checks if a string is empty. Python does this automatically inside an <code>if</code> — an empty list, empty string, <code>0</code>, and <code>None</code> all behave like <code>False</code> ("falsy"); everything else behaves like <code>True</code> ("truthy"). So <code>if errors:</code> alone means "if this list is non-empty" — no need to write <code>len(errors) > 0</code>.</p>
+ <p>Talk track: "I write if errors: instead of if len(errors) > 0: because empty containers are falsy — it's more Pythonic. And when I check for None specifically, I always use is, not == — None is a singleton, so is checks identity directly instead of relying on a value comparison."</p>`,
+ code:`errors = []
+result = None
+
+if errors:
+    print("Has errors")
+else:
+    print("No errors")
+
+if result is None:
+    print("Result not set yet")`,
+ runnable:`errors = []
+result = None
+
+if errors:
+    print("Has errors")
+else:
+    print("No errors")
+
+if result is None:
+    print("Result not set yet")`,
+ autoGrade:"output",
+ type:"list", prompt:"Type the line(s) that get printed, in order, comma-separated.", answer:["No errors","Result not set yet"],
+ hint:"An empty list is falsy, so the errors branch is skipped — same idea as [ -z ] in bash. result really is None, so that check is straightforwardly true.",
+ solution:`if errors:
+    print("Has errors")
+else:
+    print("No errors")
+# No errors
+
+if result is None:
+    print("Result not set yet")
+# Result not set yet`,
+ why:["Falsy values in Python: empty containers (<code>[]</code>, <code>{}</code>, <code>\"\"</code>, <code>set()</code>), <code>0</code>, and <code>None</code> — everything else is truthy.","<code>if errors:</code> is the idiomatic way to ask 'is this list non-empty' — writing <code>len(errors) > 0</code> works but reads as non-native Python.","Compare to <code>None</code> with <code>is</code>, never <code>==</code> — <code>None</code> is a singleton, so <code>is</code> checks identity directly and is both faster and safer than relying on a value comparison."],
+ memoryHook:"Empty / zero / None = falsy, everything else = truthy. Always compare to None with is, never ==."},
+
+{id:"q8", module:"Errors", hot:true, title:"Catch a bad number input",
+ approach:`<p>Bash equivalent: checking <strong>$?</strong> after a command and branching on failure. Python's <code>try/except</code> does the same job, but it catches a specific error <em>type</em> instead of a generic exit code.</p>
+ <p>Talk track: "I wrap the risky conversion in try, and in except I name the exact error I expect &mdash; ValueError &mdash; so I don't accidentally hide bugs I didn't anticipate."</p>`,
+ code:`try:
+    number = int(input("Enter Number: "))
+    print(number)
+except ValueError:
+    print("Please Enter Valid Number")`,
+ runnable:`def parse_number(raw):
+    try:
+        return int(raw)
+    except ValueError:
+        return "Please Enter Valid Number"
+
+print(parse_number("42"))
+print(parse_number("abc"))`,
+ runNote:"Adapted: takes a value directly instead of input(), since there's no interactive terminal here — the try/except logic is identical.",
+ type:"mcq", prompt:"Which exception fires when int() is given text that isn't a number?",
+ options:["ValueError","TypeError","KeyError","IndexError"], answer:0,
+ hint:"int() raises this specific error whenever it's handed text that can't be parsed as a number.",
+ solution:`try:
+    number = int(input("Enter Number: "))
+    print(number)
+except ValueError:
+    print("Please Enter Valid Number")`,
+ why:["Naming the specific exception (not a bare <code>except:</code>) is what separates a junior answer from a senior one.","A bare <code>except:</code> would also swallow real bugs like typos."],
+ memoryHook:"Never write a bare except: — always name the exception, or you'll hide bugs you never meant to catch."},
+
+{id:"q9", module:"OOP", hot:true, title:"Build a Server class",
+ approach:`<p>Think of a class as a bash function template that also carries its own variables around with it: the <strong>class</strong> is the template, an <strong>object</strong> is one instance with its own data. <code>self</code> just means "this particular instance" &mdash; similar to how <code>$1</code> refers to whichever argument was passed, except <code>self</code> refers to whichever object called the method.</p>
+ <p>Talk track: "__init__ runs once when the object is created, and self.hostname stores that value on the object so other methods can use it later."</p>`,
+ code:`class Server:
+    def __init__(self, hostname, ip):
+        self.hostname = hostname
+        self.ip = ip
+
+    def show_details(self):
+        print(f"{self.hostname} -> {self.ip}")
+
+server1 = Server("web01", "10.0.0.5")
+server1.show_details()`,
+ runnable:`class Server:
+    def __init__(self, hostname, ip):
+        self.hostname = hostname
+        self.ip = ip
+
+    def show_details(self):
+        print(f"{self.hostname} -> {self.ip}")
+
+server1 = Server("web01", "10.0.0.5")
+server1.show_details()`,
+ type:"text", prompt:"What must the first parameter of every instance method (including __init__) always be named?", answer:["self"],
+ hint:"Every method Python calls on an instance automatically hands it the instance itself as the first argument — what's it conventionally called?",
+ solution:`class Server:
+    def __init__(self, hostname, ip):
+        self.hostname = hostname
+        self.ip = ip
+    def show_details(self):
+        print(f"{self.hostname} -> {self.ip}")
+# web01 -> 10.0.0.5`,
+ why:["<code>self</code> is how the object refers to its own stored data.","It's passed automatically — you never pass it yourself when calling a method."],
+ memoryHook:"self = 'this instance, right here.' Not magic — Python just hands it to every method for you."},
+
+{id:"q10", module:"OOP", title:"Understand what a constructor does",
+ approach:`<p>This tests whether you know that <code>Employee(...)</code> is really shorthand for "create the object, then immediately call __init__ on it."</p>
+ <p>Talk track: "Calling the class like a function triggers __init__ automatically &mdash; I never call __init__ myself."</p>`,
+ code:`class Employee:
+    def __init__(self, name, department):
+        self.name = name
+        self.department = department
+
+e1 = Employee("Pranav", "DevOps")
+print(f"{e1.name} works in {e1.department}")`,
+ runnable:`class Employee:
+    def __init__(self, name, department):
+        self.name = name
+        self.department = department
+
+e1 = Employee("Pranav", "DevOps")
+print(f"{e1.name} works in {e1.department}")`,
+ type:"mcq", prompt:'When Employee("Pranav","DevOps") runs, which method fires automatically?',
+ options:["__init__","__new__","__call__","__main__"], answer:0,
+ hint:"Calling a class like a function does two things at once: build the object, then call one specific dunder method on it.",
+ solution:`e1 = Employee("Pranav", "DevOps")
+print(f"{e1.name} works in {e1.department}")
+# Pranav works in DevOps`,
+ why:["Nothing else needs to be called manually &mdash; object creation and construction happen together."],
+ memoryHook:"ClassName(...) is shorthand for 'build it, then run __init__ on it.' You never call __init__ by hand."},
+
+{id:"q11", module:"OOP", title:"Inherit from a base class",
+ approach:`<p>Same idea as sourcing a shared shell script (<strong>source base.sh</strong>) into several scripts so they all share functions. <code>class LinuxServer(Server): pass</code> means LinuxServer gets everything Server has, for free, with zero extra code.</p>
+ <p>Talk track: "LinuxServer inherits every method and attribute from Server &mdash; pass just means I'm not adding or overriding anything yet."</p>`,
+ code:`class Server:
+    def start(self):
+        print("Server Started")
+
+class LinuxServer(Server):
+    pass
+
+s1 = LinuxServer()
+s1.start()`,
+ runnable:`class Server:
+    def start(self):
+        print("Server Started")
+
+class LinuxServer(Server):
+    pass
+
+s1 = LinuxServer()
+s1.start()`,
+ type:"mcq", prompt:"class LinuxServer(Server): pass — what does LinuxServer get from Server?",
+ options:["All of Server's methods and attributes","Nothing — pass means empty","Only the __init__ method","A copy of Server's memory address"], answer:0,
+ hint:"pass means 'no extra code of my own' — it says nothing about what LinuxServer inherited from Server.",
+ solution:`s1 = LinuxServer()
+s1.start()  # Server Started`,
+ why:["<code>pass</code> means \"no additional code here\" &mdash; it does not block inheritance.","This is how you'd model, say, LinuxServer and WindowsServer sharing common base behavior."],
+ memoryHook:"Inheritance is 'source base.sh' for classes — everything the parent has, the child gets for free."},
+
+{id:"q11b", module:"OOP", hot:true, title:"Extend a parent method with super()",
+ approach:`<p>Plain inheritance (<code>class X(Y): pass</code>) is the easy case interviewers use to introduce the topic — the real test is what happens when the child needs the parent's setup logic <em>plus</em> its own. That's <code>super()</code>: it calls the parent's version of a method so you don't have to copy-paste its code.</p>
+ <p>Talk track: "super() calls the parent class's version of the method — I use it so I don't duplicate the parent's logic, I just run it first and then add what's new."</p>`,
+ code:`class Server:
+    def __init__(self, hostname):
+        self.hostname = hostname
+
+    def describe(self):
+        return f"Server: {self.hostname}"
+
+class LinuxServer(Server):
+    def __init__(self, hostname, distro):
+        super().__init__(hostname)
+        self.distro = distro
+
+    def describe(self):
+        base = super().describe()
+        return f"{base} ({self.distro})"
+
+s = LinuxServer("web01", "Ubuntu")
+print(s.describe())`,
+ runnable:`class Server:
+    def __init__(self, hostname):
+        self.hostname = hostname
+
+    def describe(self):
+        return f"Server: {self.hostname}"
+
+class LinuxServer(Server):
+    def __init__(self, hostname, distro):
+        super().__init__(hostname)
+        self.distro = distro
+
+    def describe(self):
+        base = super().describe()
+        return f"{base} ({self.distro})"
+
+s = LinuxServer("web01", "Ubuntu")
+print(s.describe())`,
+ autoGrade:"output",
+ type:"text", prompt:"What does print(s.describe()) output?", answer:["server:web01(ubuntu)"],
+ hint:"LinuxServer's describe() calls super().describe() first to get the parent's string, then wraps the distro in parentheses after it — read what each describe() contributes, in order.",
+ solution:`s = LinuxServer("web01", "Ubuntu")
+print(s.describe())
+# Server: web01 (Ubuntu)`,
+ why:["<code>super().__init__(hostname)</code> runs the parent's constructor so you don't have to duplicate its setup logic.","Overriding <code>describe()</code> replaces the parent's version — but calling <code>super().describe()</code> inside it lets you extend rather than fully replace it.","This is what interviewers are actually checking when they ask about inheritance — the trivial <code>pass</code> case from the previous question is just the warm-up."],
+ memoryHook:"super() means 'run the parent's version first, then add mine.' It's how you extend a class instead of just replacing or copying it."},
+
+{id:"q12", module:"Real DevOps pattern", hot:true, title:"Filter running Kubernetes pods",
+ approach:`<p>This exact pattern &mdash; loop over a list of dicts, filter by one key &mdash; is roughly 80% of real DevOps Python scripts. It's <strong>kubectl get pods | grep Running</strong> rebuilt by hand, and it's the shape Kubernetes API responses always come in.</p>
+ <p>Talk track: "I loop through the pods, check the status field, and only print the name when it's Running."</p>`,
+ code:`pods = [
+    {"name": "nginx", "status": "Running"},
+    {"name": "redis", "status": "Pending"}
+]
+
+for pod in pods:
+    if pod["status"] == "Running":
+        print(pod["name"])`,
+ runnable:`pods = [
+    {"name": "nginx", "status": "Running"},
+    {"name": "redis", "status": "Pending"}
+]
+
+for pod in pods:
+    if pod["status"] == "Running":
+        print(pod["name"])`,
+ autoGrade:"output",
+ type:"list", prompt:"Which pod name(s) get printed?", answer:["nginx"],
+ hint:"Only one of the two pods has status Running — which one?",
+ solution:`for pod in pods:
+    if pod["status"] == "Running":
+        print(pod["name"])
+# nginx`,
+ why:["Real <code>kubectl get pods -o json</code> output nests this even deeper &mdash; see the combined exercise near the end for the full version."],
+ memoryHook:"Loop + if + print = kubectl get pods | grep Running, rebuilt in nine lines of Python."},
+
+{id:"q13", module:"Dictionaries", title:"Count occurrences of each status",
+ approach:`<p>This is <strong>sort | uniq -c</strong> implemented with a dictionary. <code>.get(status, 0)</code> is the trick: "give me the current count, or 0 if I've never seen this status before," then add 1.</p>
+ <p>Talk track: "I use dict.get with a default of zero so the first time I see a new status it doesn't crash with a KeyError."</p>`,
+ code:`statuses = ["Running", "Pending", "Running", "Failed", "Running"]
+
+result = {}
+for status in statuses:
+    result[status] = result.get(status, 0) + 1
+
+print(result)`,
+ runnable:`statuses = ["Running", "Pending", "Running", "Failed", "Running"]
+
+result = {}
+for status in statuses:
+    result[status] = result.get(status, 0) + 1
+
+print(result)`,
+ autoGrade:"output",
+ type:"dict", prompt:"Type the resulting dict as Key:count, Key:count, Key:count", answer:{Running:3,Pending:1,Failed:1},
+ hint:"Count how many times each string appears in the list — one status shows up three times.",
+ solution:`result = {}
+for status in statuses:
+    result[status] = result.get(status, 0) + 1
+print(result)  # {'Running': 3, 'Pending': 1, 'Failed': 1}`,
+ why:["Without <code>.get(status, 0)</code>, the first time a new key appears, <code>result[status] + 1</code> would raise <code>KeyError</code>.","This counting pattern is worth memorizing cold &mdash; it reappears constantly."],
+ memoryHook:".get(key, 0) + 1 is your one-line uniq -c. Memorize the exact syntax, not just the idea."},
+
+{id:"q14", module:"Built-ins", title:"Sort a list of servers",
+ approach:`<p>Exactly <strong>sort</strong> in bash. <code>.sort()</code> changes the list in place; <code>sorted()</code> returns a new list and leaves the original untouched &mdash; interviewers sometimes ask which one you'd pick to avoid mutating shared data.</p>
+ <p>Talk track: "I used .sort() because I don't need the original order anymore; if I did, I'd use sorted() instead."</p>`,
+ code:`servers = ["web3", "web1", "web2"]
+servers.sort()
+print(servers)`,
+ runnable:`servers = ["web3", "web1", "web2"]
+servers.sort()
+print(servers)`,
+ autoGrade:"output",
+ type:"list", prompt:"Type the resulting servers list, in order.", answer:["web1","web2","web3"],
+ hint:".sort() puts the strings in alphabetical order — web1 before web2 before web3.",
+ solution:`servers.sort()
+print(servers)  # ['web1', 'web2', 'web3']`,
+ why:["<code>.sort()</code> mutates in place and returns <code>None</code> &mdash; never write <code>servers = servers.sort()</code>."],
+ memoryHook:".sort() changes the list and returns nothing; sorted() hands back a new list untouched. Never assign the result of .sort()."},
+
+{id:"q15", module:"Real DevOps OOP", title:"Model an EC2 instance's state",
+ approach:`<p>This is "state management" &mdash; the same idea as a systemd service moving from <em>inactive</em> to <em>active</em>. The object holds its own current state (<code>self.state</code>) and a method changes that state and reports it.</p>
+ <p>Talk track: "start() mutates self.state to running and prints confirmation &mdash; the object remembers its own status between calls."</p>`,
+ code:`class EC2Instance:
+    def __init__(self, instance_id, state):
+        self.instance_id = instance_id
+        self.state = state
+
+    def start(self):
+        self.state = "running"
+        print(f"Instance {self.instance_id} started")
+
+ec2 = EC2Instance("i-123", "stopped")
+ec2.start()`,
+ runnable:`class EC2Instance:
+    def __init__(self, instance_id, state):
+        self.instance_id = instance_id
+        self.state = state
+
+    def start(self):
+        self.state = "running"
+        print(f"Instance {self.instance_id} started")
+
+ec2 = EC2Instance("i-123", "stopped")
+ec2.start()`,
+ autoGrade:"output",
+ type:"contains", prompt:"What line gets printed when ec2.start() runs?", mustContain:["instancei-123started"],
+ hint:"start() prints a confirmation using self.instance_id — what id was ec2 built with?",
+ solution:`ec2 = EC2Instance("i-123", "stopped")
+ec2.start()
+# Instance i-123 started`,
+ why:["The object's data (<code>self.state</code>) survives between method calls &mdash; that's the entire point of using a class instead of loose variables."],
+ memoryHook:"self.state is the object's own memory — it's what makes an object different from just a function."},
+
+{id:"q16", module:"os module", title:"Work with the filesystem via os",
+ approach:`<p><code>os</code> is your Python door into the shell environment: <code>os.getcwd()</code> is <strong>pwd</strong>, <code>os.listdir()</code> is <strong>ls</strong>, <code>os.mkdir()</code> is <strong>mkdir</strong>, <code>os.path.exists()</code> is <strong>[ -e file ]</strong>. Don't memorize all of them &mdash; recognize the pattern: os = "ask or tell the operating system something."</p>`,
+ code:`import os
+
+print(os.getcwd())
+print(os.listdir())
+os.mkdir("logs")
+os.remove("test.txt")
+
+if os.path.exists("app.log"):
+    print("Exists")`,
+ runNote:"os talks to a real filesystem and process — there's nothing real to inspect inside a browser sandbox. Reason through the bash-equivalent instead, and confirm with an actual pwd/ls in your own terminal if you want to see it firsthand.",
+ type:"mcq", prompt:"What does os.getcwd() return?",
+ options:["The current working directory path","The list of files in the current directory","The operating system's name","The current logged-in user"], answer:0,
+ hint:"Match it to its bash twin: getcwd ↔ pwd, listdir ↔ ls.",
+ solution:`print(os.getcwd())   # e.g. /Users/pranav/projects`,
+ why:["Same job as <code>pwd</code> in bash &mdash; where am I right now."],
+ memoryHook:"os = 'ask the operating system.' Every os.* call has a one-word bash twin."},
+
+{id:"q17", module:"sys module", title:"Read command-line arguments",
+ approach:`<p><code>sys.argv</code> is Python's <strong>$1 $2 $3...</strong> &mdash; the list of everything typed after the script name, with <code>argv[0]</code> always being the script name itself, same as bash's <code>$0</code>.</p>
+ <p>Talk track: "argv[0] is the script name, argv[1] onward are the actual arguments &mdash; just like $0 and $1 in bash."</p>`,
+ code:`# terminal: python app.py nginx
+
+import sys
+print(sys.argv)
+
+pod_name = sys.argv[1]
+print(f"Checking pod {pod_name}")`,
+ runnable:`argv = ["app.py", "nginx"]  # stands in for sys.argv here
+
+print(argv)
+pod_name = argv[1]
+print(f"Checking pod {pod_name}")`,
+ runNote:"Adapted: argv is hand-built here since there's no real command line in this sandbox — sys.argv works exactly the same way for real.",
+ autoGrade:"output",
+ type:"list", prompt:"Type sys.argv's contents as a comma list, in order.", answer:["app.py","nginx"],
+ hint:"argv[0] is always the script's own name — the real arguments start at index 1, same as bash's $1.",
+ solution:`print(sys.argv)   # ['app.py', 'nginx']
+pod_name = sys.argv[1]
+print(f"Checking pod {pod_name}")   # Checking pod nginx`,
+ why:["Index 0 is always the script's own filename &mdash; a common off-by-one trap for beginners."],
+ memoryHook:"sys.argv = [$0, $1, $2, ...]. Index 0 is the script talking about itself."},
+
+{id:"q18", module:"subprocess module", hot:true, title:"Run a shell command from Python",
+ approach:`<p>This is how Python calls out to any shell command &mdash; think <strong>$(kubectl get pods)</strong> inside a bash script. Pass a <em>list</em> of args (not one big string) to sidestep shell-injection foot-guns, and ask for <code>capture_output=True, text=True</code> to get the output back as a normal string instead of raw bytes.</p>
+ <p>Talk track: "os.system just runs the command and gives me an exit code; subprocess.run actually hands me the output text so I can parse it."</p>`,
+ code:`import subprocess
+
+result = subprocess.run(
+    ["kubectl", "get", "pods"],
+    capture_output=True,
+    text=True
+)
+print(result.stdout)`,
+ runNote:"subprocess needs a real shell process behind it, which a browser sandbox intentionally can't grant — that's the whole reason this module exists. Trust the pattern here; run it for real on your own terminal or a KodeKloud lab.",
+ type:"mcq", prompt:"What's the key difference between os.system() and subprocess.run()?",
+ options:["subprocess.run() can capture the command's output; os.system() only returns an exit code",
+          "They are exactly the same, just different names",
+          "os.system() is newer and safer",
+          "subprocess.run() cannot run external commands"], answer:0,
+ hint:"One of these two hands you the command's output text back; the other only tells you whether it succeeded.",
+ solution:`result = subprocess.run(["kubectl","get","pods"], capture_output=True, text=True)
+print(result.stdout)`,
+ why:["Passing a list of args instead of one string avoids shell-injection issues.","<code>text=True</code> decodes stdout to a normal <code>str</code> instead of <code>bytes</code>."],
+ memoryHook:"os.system = 'did it work?' subprocess.run = 'did it work, AND what did it say?'"},
+
+{id:"q24", module:"Environment variables", title:"Read a secret from the environment",
+ approach:`<p>This is <strong>echo $API_KEY</strong> from inside Python. <code>os.getenv("KEY")</code> reads whatever was exported in the shell before the script ran &mdash; the standard way to hand secrets and config into a script without hardcoding them.</p>
+ <p>Talk track: "I never hardcode secrets in the script &mdash; I read them from the environment at runtime with os.getenv."</p>`,
+ code:`# terminal:
+# export API_KEY=12345
+
+import os
+api_key = os.getenv("API_KEY")
+print(api_key)`,
+ runnable:`env = {"API_KEY": "12345"}  # stands in for the real environment here
+
+api_key = env.get("API_KEY")
+print(api_key)`,
+ runNote:"Adapted: a plain dict stands in for the real environment — os.getenv(\"API_KEY\") reads the real thing the same way.",
+ autoGrade:"output",
+ type:"text", prompt:"What gets printed?", answer:["12345"],
+ hint:"os.getenv reads whatever was exported in the shell before Python started — it doesn't invent the value.",
+ solution:`api_key = os.getenv("API_KEY")
+print(api_key)   # 12345`,
+ why:["<code>os.getenv()</code> returns <code>None</code> instead of crashing if the variable isn't set."],
+ memoryHook:"echo $VAR in bash = os.getenv(\"VAR\") in Python. Never hardcode a secret you could read from the environment instead."},
+
+{id:"q19", module:"requests / APIs", hot:true, title:"Call an API and read the response",
+ approach:`<p>This is <strong>curl</strong> from inside Python. <code>requests.get(url)</code> fetches, <code>.status_code</code> is the HTTP code, and <code>.json()</code> is like piping curl's output through <strong>jq</strong> &mdash; it turns raw JSON text into a real Python dict.</p>
+ <p>Talk track: "I call requests.get to hit the API, check status_code to confirm it succeeded, then call .json() to get usable data."</p>`,
+ code:`import requests
+
+response = requests.get("https://api.github.com/repos/kubernetes/kubernetes")
+data = response.json()
+print(data["name"])`,
+ runNote:"This sandbox blocks outbound network calls on purpose — the same reason a random page can't quietly call your bank's API from your browser. Try it in Colab if you want to see a live response.",
+ type:"mcq", prompt:"What does response.json() actually do?",
+ options:["Parses the JSON response body into a Python dict/list","Sends a JSON payload to the server","Checks if the response is valid JSON","Converts the URL into JSON format"], answer:0,
+ hint:".json() doesn't talk to the network again — it just converts what already arrived.",
+ solution:`response = requests.get(url)
+data = response.json()
+print(data["name"])`,
+ why:["Without <code>.json()</code>, <code>response.text</code> is just a raw string &mdash; you couldn't index into it with <code>[\"name\"]</code>."],
+ memoryHook:"requests.get = curl. .json() = piping that curl output through jq."},
+
+{id:"q20", module:"APIs", title:"Extract a field from an API response",
+ approach:`<p>Same drilling-into-JSON move as the nested-dict exercise earlier, just sourced from a live API instead of a hardcoded dict. Interviewers chain these two on purpose to see if you generalize the pattern.</p>
+ <p>Talk track: "Once .json() gives me a dict, accessing a field is identical to any other nested dictionary."</p>`,
+ code:`# response.json() returned:
+# {"name": "nginx", "status": "Running"}
+
+import requests
+response = requests.get(url)
+data = response.json()
+print(data["status"])`,
+ runnable:`data = {"name": "nginx", "status": "Running"}  # stands in for response.json()
+
+print(data["status"])`,
+ runNote:"Adapted: data is hand-built here to stand in for response.json() — the indexing works identically on the real thing.",
+ type:"text", prompt:"Write the expression that reads the status field from data.", answer:['data["status"]',"data['status']"],
+ hint:"Same move as the nested-JSON exercise — data is just a dict now, sourced from an API instead of hardcoded.",
+ solution:`print(data["status"])   # Running`,
+ why:["Same bracket-indexing rule &mdash; a JSON object becomes a Python dict, full stop."],
+ memoryHook:"Once .json() runs, an API response is just a dictionary — no special rules apply."},
+
+{id:"q21", module:"Regex", title:"Extract an IP with a regex",
+ approach:`<p>Bash equivalent: <strong>grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+'</strong>. <code>\\d+</code> means "one or more digits," and the dots need escaping (<code>\\.</code>) because a bare dot in regex means "any character."</p>
+ <p>Talk track: "findall scans the whole string and returns every match of that digit-dot-digit-dot pattern."</p>`,
+ code:`import re
+
+log = "Connection from 10.0.0.5"
+ip = re.findall(r"\\d+\\.\\d+\\.\\d+\\.\\d+", log)
+print(ip)`,
+ runnable:`import re
+
+log = "Connection from 10.0.0.5"
+ip = re.findall(r"\\d+\\.\\d+\\.\\d+\\.\\d+", log)
+print(ip)`,
+ runCaveat:"Skulpt's re module is a partial reimplementation — if this errors, that's the sandbox, not your regex. Confirm at Programiz.",
+ autoGrade:"output",
+ type:"list", prompt:"What does this print?", answer:["10.0.0.5"],
+ hint:"\\d+ means one or more digits, and \\. means a literal dot — walk the pattern across the string.",
+ solution:`ip = re.findall(r"\\d+\\.\\d+\\.\\d+\\.\\d+", log)
+print(ip)   # ['10.0.0.5']`,
+ why:["<code>\\d</code> = any digit, <code>+</code> = one or more, <code>\\.</code> = a literal dot (escaped)."],
+ memoryHook:"\\d = digit, + = one-or-more, \\. = an actual dot (undoing the dot's normal 'any character' meaning)."},
+
+{id:"q22", module:"Regex", title:"Extract all ERROR lines with regex",
+ approach:`<p>This is <strong>grep 'ERROR'</strong> but with <code>.*</code> meaning "and everything else on this line."</p>
+ <p>Talk track: "findall with ERROR.* grabs each full line that starts with ERROR, not just the word itself."</p>`,
+ code:`import re
+
+text = """
+INFO Server Started
+ERROR Database Down
+ERROR Timeout
+"""
+
+errors = re.findall(r"ERROR.*", text)
+print(errors)`,
+ runnable:`import re
+
+text = """
+INFO Server Started
+ERROR Database Down
+ERROR Timeout
+"""
+
+errors = re.findall(r"ERROR.*", text)
+print(errors)`,
+ runCaveat:"Skulpt's re module is a partial reimplementation — if this errors, that's the sandbox, not your regex. Confirm at Programiz.",
+ autoGrade:"output",
+ type:"list", prompt:"Type the resulting list, comma-separated.", answer:["ERROR Database Down","ERROR Timeout"],
+ hint:"ERROR.* matches from the word ERROR to the end of that line — not just the word itself.",
+ solution:`errors = re.findall(r"ERROR.*", text)
+print(errors)
+# ['ERROR Database Down', 'ERROR Timeout']`,
+ why:["<code>.*</code> is greedy and matches to the end of the line (it stops at the newline by default)."],
+ memoryHook:".* is 'and everything else on this line' — that's why you get the full message, not just the tag."},
+
+{id:"q23", module:"Combined pattern", title:"Parse a log file into per-level counts",
+ approach:`<p>This combines the counter exercise and the log-file exercise from earlier &mdash; open a file, loop it, and instead of one counter, keep a small dictionary of counters, one per log level. This open → loop → classify → count shape is the single most reused pattern in DevOps scripting; have it memorized cold.</p>`,
+ code:`# app.log
+INFO Start
+ERROR DB Down
+WARNING CPU High
+ERROR Timeout
+
+result = {"INFO": 0, "ERROR": 0, "WARNING": 0}
+
+with open("app.log") as file:
+    for line in file:
+        if "INFO" in line:
+            result["INFO"] += 1
+        elif "ERROR" in line:
+            result["ERROR"] += 1
+        elif "WARNING" in line:
+            result["WARNING"] += 1
+
+print(result)`,
+ runnable:`log_text = """INFO Start
+ERROR DB Down
+WARNING CPU High
+ERROR Timeout"""
+
+result = {"INFO": 0, "ERROR": 0, "WARNING": 0}
+
+for line in log_text.splitlines():
+    if "INFO" in line:
+        result["INFO"] += 1
+    elif "ERROR" in line:
+        result["ERROR"] += 1
+    elif "WARNING" in line:
+        result["WARNING"] += 1
+
+print(result)`,
+ runNote:"Adapted: reads from a string instead of a real file, same reason as the first log-counting exercise.",
+ autoGrade:"output",
+ type:"dict", prompt:"Type the resulting dict as Key:count, Key:count, Key:count", answer:{INFO:1,ERROR:2,WARNING:1},
+ hint:"Same as the earlier counter, but now there are three buckets instead of one — which line increments which bucket?",
+ solution:`print(result)  # {'INFO': 1, 'ERROR': 2, 'WARNING': 1}`,
+ why:["<code>elif</code> chains here assume each line matches only one level &mdash; worth saying out loud that you're aware of that assumption."],
+ memoryHook:"open → loop → classify → count. This is two earlier patterns fused — the most reused shape in DevOps scripting."},
+
+{id:"q25", module:"Combined pattern", hot:true, title:"Parse live kubectl output",
+ approach:`<p>The interview's favorite "prove you can glue two modules together" question: <code>subprocess</code> runs the actual CLI command, and <code>json.loads</code> turns its text output into a real Python object you can loop through &mdash; identical shape to the pod-filtering exercise, just fed by a live command instead of a hardcoded list.</p>
+ <p>Talk track: "subprocess.run executes kubectl and captures stdout as text, json.loads parses that text into a dict, then I loop data['items'] exactly like any other list of pod dicts."</p>`,
+ code:`import subprocess
+import json
+
+result = subprocess.run(
+    ["kubectl", "get", "pods", "-o", "json"],
+    capture_output=True,
+    text=True
+)
+
+data = json.loads(result.stdout)
+
+for pod in data["items"]:
+    if pod["status"]["phase"] == "Running":
+        print(pod["metadata"]["name"])`,
+ runNote:"This needs a real kubectl binary talking to a real cluster — nothing to connect to inside a browser tab. Reason through the two-step shape (subprocess → json.loads) instead; it's the same shape every time.",
+ type:"mcq", prompt:"Before you can loop data[\"items\"], what must happen to result.stdout first?",
+ options:['It must be parsed with json.loads(result.stdout)', "It must be decoded with result.stdout.decode()", "It must be run through eval(result.stdout)", "Nothing — it's already a dict"], answer:0,
+ hint:"result.stdout is plain text the moment subprocess hands it back — text isn't a dict yet.",
+ solution:`data = json.loads(result.stdout)
+for pod in data["items"]:
+    if pod["status"]["phase"] == "Running":
+        print(pod["metadata"]["name"])`,
+ why:["<code>result.stdout</code> is plain text &mdash; <code>json.loads</code> (string → object) turns it into a real dict you can index into.","Same load vs loads distinction as the JSON-file exercise, tested from the other direction."],
+ memoryHook:"subprocess brings the words home; json.loads teaches Python to understand them. Two different jobs, always in that order."},
+
+{id:"qbonus", module:"Bonus · object chains", hot:true, title:"Decode a chained API object (e.g. an LLM SDK response)",
+ approach:`<p>Whenever you see chained dots and brackets like this, read it left to right as "go inside, then go inside again." You don't need to know what the SDK does internally &mdash; you just need to narrate the chain out loud.</p>
+ <p>Talk track: "client.chat.completions.create() is a method call that returns a response object. response.choices is a list, so I index into it with [0]. That item has a message attribute, which has a content attribute &mdash; that content is the actual reply text." This "object → list → index → attribute → attribute" reading applies to almost any SDK or API response you'll ever be handed.</p>`,
+ code:`response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello"}]
+)
+
+# response
+#  -- choices            (a list)
+#      -- [0]             (first item)
+#          -- message      (an object)
+#              -- content   (the actual text)`,
+ runnable:`class Message:
+    def __init__(self, content):
+        self.content = content
+
+class Choice:
+    def __init__(self, message):
+        self.message = message
+
+class Response:
+    def __init__(self, choices):
+        self.choices = choices
+
+response = Response([Choice(Message("Hello! How can I help?"))])
+print(response.choices[0].message.content)`,
+ runNote:"Adapted: these tiny classes stand in for the real SDK's objects, so you can watch the exact same chain resolve for real.",
+ type:"text", prompt:"Write the exact chain of dots/brackets that pulls just the reply text out of response.",
+ answer:["response.choices[0].message.content"],
+ hint:"Read it left to right: step into choices, grab item 0, then two more attribute hops.",
+ solution:`reply_text = response.choices[0].message.content`,
+ why:["<code>choices</code> is a list because some APIs can return multiple candidate answers &mdash; index <code>[0]</code> takes the first.","This exact reading strategy works on almost any nested SDK object, not just this one."],
+ memoryHook:"object → list → index → attribute → attribute. Say those five words and you can decode almost any SDK response cold."},
+
+{id:"q26", module:"*args / **kwargs", title:"Accept any number of arguments",
+ approach:`<p>Bash equivalent: a function that reads <strong>$@</strong> to grab however many arguments got passed, however many there are. <code>*args</code> does the same for positional arguments (packed into a tuple); <code>**kwargs</code> does it for named/keyword arguments (packed into a dict).</p>
+ <p>Talk track: "I use *args and **kwargs when I don't know in advance how many arguments will be passed — the function just accepts whatever shows up."</p>`,
+ code:`def run_checks(*args, **kwargs):
+    print(args)
+    print(kwargs)
+
+run_checks("cpu", "memory", retries=3, verbose=True)`,
+ runnable:`def run_checks(*args, **kwargs):
+    print(args)
+    print(kwargs)
+
+run_checks("cpu", "memory", retries=3, verbose=True)`,
+ autoGrade:"output",
+ type:"list", prompt:"What does print(args) show? Type the items, in order, comma-separated.", answer:["cpu","memory"],
+ hint:"*args collects whatever positional arguments aren't otherwise named — cpu and memory, in the order they were passed.",
+ solution:`run_checks("cpu", "memory", retries=3, verbose=True)
+# ('cpu', 'memory')
+# {'retries': 3, 'verbose': True}`,
+ why:["*args packs any extra positional arguments into a tuple.","**kwargs packs any extra keyword arguments into a dict.","Common real use: a wrapper function that forwards *args/**kwargs straight through to subprocess.run or requests.get untouched."],
+ memoryHook:"*args = 'however many extra positional args show up, tuple them.' **kwargs = 'however many extra named args show up, dict them.'"},
+
+{id:"q27", module:"Decorators", hot:true, title:"Write a retry decorator",
+ approach:`<p>Bash equivalent: a wrapper like <strong>until cmd; do sleep 1; done</strong> that retries a flaky command. A decorator does the same for a Python function — it wraps it with extra behavior without touching the original function's code.</p>
+ <p>Talk track: "A decorator is a function that takes a function and returns a new, wrapped version of it — @retry above a function is just shorthand for func = retry(func)."</p>`,
+ code:`def retry(func):
+    def wrapper(*args, **kwargs):
+        for attempt in range(3):
+            try:
+                return func(*args, **kwargs)
+            except Exception:
+                print(f"Attempt {attempt+1} failed, retrying...")
+        return "All retries failed"
+    return wrapper
+
+@retry
+def flaky_health_check():
+    raise Exception("timeout")
+
+print(flaky_health_check())`,
+ runnable:`def retry(func):
+    def wrapper(*args, **kwargs):
+        for attempt in range(3):
+            try:
+                return func(*args, **kwargs)
+            except Exception:
+                print(f"Attempt {attempt+1} failed, retrying...")
+        return "All retries failed"
+    return wrapper
+
+@retry
+def flaky_health_check():
+    raise Exception("timeout")
+
+print(flaky_health_check())`,
+ type:"number", prompt:"How many times does \"Attempt X failed, retrying...\" get printed before it gives up?", answer:3,
+ hint:"range(3) means the loop body runs 3 times — every one of those 3 attempts raises, so every one prints.",
+ solution:`# Attempt 1 failed, retrying...
+# Attempt 2 failed, retrying...
+# Attempt 3 failed, retrying...
+# All retries failed`,
+ why:["A decorator receives the original function and returns a new function that wraps it.","<code>@retry</code> above a def is sugar for <code>flaky_health_check = retry(flaky_health_check)</code>.","This exact wrap-and-retry pattern is extremely common for flaky health checks, API calls, or SSH connections in real DevOps scripts."],
+ memoryHook:"@decorator above a function is sugar for func = decorator(func) — say that sentence and decorators stop being magic."},
+
+{id:"q28", module:"Context managers", title:"Guarantee cleanup with a context manager",
+ approach:`<p>Bash equivalent: <strong>trap 'cleanup' EXIT</strong> — code that's guaranteed to run when a block finishes, success or failure. A custom context manager does the same job for one specific block, via <code>__enter__</code> and <code>__exit__</code>.</p>
+ <p>Talk track: "with calls __enter__ when the block starts and __exit__ when it ends — even if an exception happens inside — so it's the guaranteed-cleanup pattern, just scoped to one block instead of the whole script."</p>`,
+ code:`class Timer:
+    def __enter__(self):
+        print("Started")
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("Stopped")
+
+with Timer():
+    print("Doing work")`,
+ runnable:`class Timer:
+    def __enter__(self):
+        print("Started")
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        print("Stopped")
+
+with Timer():
+    print("Doing work")`,
+ runCaveat:"Skulpt's support for custom __enter__/__exit__ context managers can be inconsistent — if this errors, that's the sandbox, not your logic. Confirm at Programiz.",
+ autoGrade:"output",
+ type:"list", prompt:"Type the three lines that get printed, in order, comma-separated.", answer:["Started","Doing work","Stopped"],
+ hint:"__enter__ runs first no matter what, then the block body runs, then __exit__ runs last — always.",
+ solution:`with Timer():
+    print("Doing work")
+# Started
+# Doing work
+# Stopped`,
+ why:["<code>__enter__</code> runs when the with block starts; <code>__exit__</code> runs when it ends, even during an exception.","This exact protocol is how file objects auto-close — <code>open()</code> returns something implementing it."],
+ memoryHook:"with = guaranteed cleanup, exceptions or not — same job as a bash trap EXIT, just scoped to one block."},
+
+{id:"q29", module:"YAML", hot:true, title:"Parse a YAML config file",
+ approach:`<p>Kubernetes manifests, Ansible playbooks, and CI configs (GitHub Actions, GitLab CI) are almost always YAML — so this comes up whenever a DevOps interview touches config files at all.</p>
+ <p>Talk track: "yaml.safe_load is my json.loads for YAML — it turns the YAML text into the same kind of Python object json.loads would, usually a dict, so indexing it works exactly the same way afterward."</p>`,
+ code:`import yaml
+
+config_text = """
+name: nginx
+replicas: 3
+"""
+
+config = yaml.safe_load(config_text)
+print(config["replicas"])`,
+ runNote:"PyYAML (the yaml module) isn't part of core Python and isn't available in this browser sandbox — install it for real with pip install pyyaml. Once parsed, the logic is identical to json.loads.",
+ type:"number", prompt:"What does print(config[\"replicas\"]) output?", answer:3,
+ hint:"yaml.safe_load hands back a dict, exactly like json.loads would — read the replicas line in the YAML above.",
+ solution:`config = yaml.safe_load(config_text)
+print(config["replicas"])  # 3`,
+ why:["<code>yaml.safe_load</code> is the YAML equivalent of <code>json.loads</code>.","Always prefer <code>safe_load</code> over plain <code>load</code> — plain load can execute arbitrary Python objects embedded in untrusted YAML.","Kubernetes manifests and Ansible playbooks are YAML — parsing them this way is an everyday DevOps script task."],
+ memoryHook:"yaml.safe_load = json.loads for YAML. Always 'safe_load,' never plain 'load,' on YAML you didn't write yourself."},
+
+{id:"q30", module:"argparse", title:"Build a real CLI with argparse",
+ approach:`<p>Bash equivalent: <strong>getopts</strong> for parsing named flags instead of reading <code>$1</code>, <code>$2</code> by position. <code>argparse</code> is the grown-up version of reading <code>sys.argv</code> by hand — named flags, help text, and type conversion for free.</p>
+ <p>Talk track: "I define each flag once with add_argument, call parse_args(), and then read every value off the result as an attribute — no manual index-counting into sys.argv."</p>`,
+ code:`import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--host", required=True)
+parser.add_argument("--retries", type=int, default=3)
+
+args = parser.parse_args()
+print(args.host, args.retries)
+
+# terminal: python check.py --host web1 --retries 5`,
+ runNote:"argparse reads the real command line, which doesn't exist inside this browser tab. Reason through the flag names instead — it's the same shape every time: define flags, call parse_args(), read attributes off the result.",
+ type:"mcq", prompt:"After parser.parse_args() runs, how do you read the --host value?",
+ options:["args.host","args[\"host\"]","args.get(\"host\")","parser.host"], answer:0,
+ hint:"argparse hands back a Namespace object — you read its values as attributes with a dot, not dictionary keys.",
+ solution:`args = parser.parse_args()
+print(args.host, args.retries)  # web1 5`,
+ why:["<code>--host web1</code> becomes the attribute <code>args.host</code> automatically — no manual sys.argv indexing.","<code>type=int</code> on --retries means <code>args.retries</code> is already a real int, not a string you have to convert yourself."],
+ memoryHook:"argparse is getopts for Python — define the flags once, then just read args.whatever."},
+
+{id:"q31", module:"logging", title:"Use logging instead of print",
+ approach:`<p>Bash equivalent: using <strong>logger</strong> to write to syslog with a severity level, instead of a plain <strong>echo</strong>. Python's <code>logging</code> module gives you severity levels (DEBUG/INFO/WARNING/ERROR) and can route output to a file or syslog — <code>print</code> can do neither.</p>
+ <p>Talk track: "Anything that runs unattended — a cron job, a daemon, a CI step — should use logging instead of print, because logging gives me severity levels and somewhere real to send the output."</p>`,
+ code:`import logging
+
+logging.basicConfig(level=logging.INFO)
+logging.info("Service started")
+logging.warning("Disk usage high")
+logging.error("Connection failed")`,
+ runNote:"Python's logging module isn't implemented in this browser sandbox. Reason through the severity levels instead — the pattern is identical everywhere you'll actually use it.",
+ type:"mcq", prompt:"What's the main reason production scripts use logging instead of print?",
+ options:["logging supports severity levels and can route to files/syslog, not just the terminal","logging runs faster than print","print doesn't work in Python 3","logging automatically fixes bugs it finds"], answer:0,
+ hint:"Think about what print can't do that a real unattended service needs: severity levels, and writing somewhere other than stdout.",
+ solution:`logging.basicConfig(level=logging.INFO)
+logging.info("Service started")
+logging.warning("Disk usage high")
+logging.error("Connection failed")`,
+ why:["<code>logging.basicConfig(level=logging.INFO)</code> sets the minimum severity that actually gets shown — anything below that threshold is silently skipped.","This is the difference between a script you debug once by eye and a service someone else has to operate later."],
+ memoryHook:"print is for a script you run once and watch. logging is for anything that runs unattended — always reach for logging there."},
+];
+
+/* ---------- state ---------- */
+const KEY = "devops-py-drill-progress-v3";
+let progress = {};
+try{
+  const raw = JSON.parse(localStorage.getItem(KEY) || "{}");
+  if(raw && typeof raw === "object") progress = raw;
+}catch(e){ progress = {}; }
+function saveProgress(){ try{ localStorage.setItem(KEY, JSON.stringify(progress)); }catch(e){} }
+function isDone(id){ return !!(progress[id] && progress[id].status === "done"); }
+function recordAttempt(id, answerText, correct){
+  const p = progress[id] && typeof progress[id]==="object" ? progress[id] : {attempts:0};
+  p.attempts = (p.attempts||0) + 1;
+  p.lastAnswer = answerText;
+  p.correct = correct;
+  p.ts = Date.now();
+  if(correct) p.status = "done";
+  progress[id] = p;
+  saveProgress();
+}
+
+const FLAT_IDS = GROUPS.flatMap(g=>g.items);
+const STATIC_IDS = ["intro","cheatsheet","tools","history"];
+function isValidId(id){ return !!getQ(id) || STATIC_IDS.includes(id); }
+let currentId = (function(){
+  const fromHash = (location.hash||"").slice(1);
+  return isValidId(fromHash) ? fromHash : FLAT_IDS[0];
+})();
+function navigateTo(id){
+  if(!isValidId(id)) id = FLAT_IDS[0];
+  currentId = id;
+  render();
+  try{
+    const wantHash = "#" + id;
+    if(location.hash !== wantHash) history.pushState(null, "", wantHash);
+  }catch(e){}
+  window.scrollTo({top:0,behavior:"instant"});
+}
+window.addEventListener("popstate", ()=>{
+  const id = (location.hash||"").slice(1);
+  currentId = isValidId(id) ? id : FLAT_IDS[0];
+  render();
+  window.scrollTo({top:0,behavior:"instant"});
+});
+
+/* ---------- helpers ---------- */
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function hi(raw){
+  const s = esc(raw);
+  const re = /(#.*$)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(def|class|self|import|for|in|if|elif|else|return|try|except|with|as|print|True|False|None|and|or|not|from|pass)\b|\b(\d+(?:\.\d+)*)\b/gm;
+  return s.replace(re, (m, com, str, kw, num)=>{
+    if(com!==undefined) return '<span class="c-com">'+com+'</span>';
+    if(str!==undefined) return '<span class="c-str">'+str+'</span>';
+    if(kw!==undefined) return '<span class="c-kw">'+kw+'</span>';
+    if(num!==undefined) return '<span class="c-num">'+num+'</span>';
+    return m;
+  });
+}
+function norm(s){ return String(s).toLowerCase().replace(/\s+/g,"").replace(/['"]/g,""); }
+function parseList(s){ return String(s).split(",").map(x=>norm(x)).filter(x=>x.length); }
+function parseDict(s){
+  const out = {};
+  String(s).split(",").forEach(pair=>{
+    const idx = pair.indexOf(":");
+    if(idx===-1) return;
+    const k = pair.slice(0,idx).trim().toLowerCase();
+    const v = pair.slice(idx+1).trim();
+    if(k) out[k] = v.replace(/[^0-9.-]/g,"");
+  });
+  return out;
+}
+function getQ(id){ return QUESTIONS.find(q=>q.id===id); }
+
+function doneCount(){ return QUESTIONS.filter(q=>isDone(q.id)).length; }
+function updateOverall(){
+  const d = doneCount(), t = QUESTIONS.length;
+  document.getElementById("overall-count").textContent = `${d} / ${t}`;
+  const pct = t? Math.round(d/t*100):0;
+  document.getElementById("overall-bar").style.width = pct+"%";
+  document.getElementById("rail-fill").style.width = pct+"%";
+}
+
+/* ---------- sidebar ---------- */
+function renderSidebar(){
+  const el = document.getElementById("navlist");
+  el.innerHTML = "";
+  GROUPS.forEach(g=>{
+    const h = document.createElement("div");
+    h.className = "navgroup-title";
+    h.textContent = g.title;
+    el.appendChild(h);
+    g.items.forEach(id=>{
+      const isQ = !!getQ(id);
+      const btn = document.createElement("button");
+      btn.className = "navitem" + (id===currentId?" active":"") + (isDone(id)?" done":"") + (isQ?"":" static");
+      btn.innerHTML = `<span class="mark"></span><span class="t">${labelFor(id)}</span>`;
+      btn.onclick = ()=>navigateTo(id);
+      el.appendChild(btn);
+    });
+  });
+}
+function labelFor(id){
+  if(id==="intro") return "Tonight's plan";
+  if(id==="cheatsheet") return "Cheat sheet";
+  if(id==="tools") return "Where to run code";
+  if(id==="history") return "Your attempt history";
+  const q = getQ(id);
+  return q ? q.title : id;
+}
+
+/* ---------- skulpt runner ---------- */
+function builtinRead(x){
+  if(Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+    throw "File not found: '" + x + "'";
+  return Sk.builtinFiles["files"][x];
+}
+function runInTerminal(code, termEl, onDone){
+  termEl.innerHTML = '<span class="prompt-line">$ python app.py</span>';
+  let outBuf = "";
+  const finish = (result)=>{ if(typeof onDone === "function"){ try{ onDone(result); }catch(e){ console.error("onDone failed", e); } } };
+  if(typeof Sk === "undefined"){
+    const d = document.createElement("div");
+    d.className = "err";
+    d.textContent = "Python engine failed to load (network hiccup?). Paste this into Programiz instead.";
+    termEl.appendChild(d);
+    finish({hadError:true, output:"", errorText:"engine-not-loaded"});
+    return;
+  }
+  Sk.configure({
+    output: (text)=>{ outBuf += text; termEl.appendChild(document.createTextNode(text)); },
+    read: builtinRead,
+    __future__: Sk.python3
+  });
+  try{
+    Sk.misceval.asyncToPromise(function(){
+      return Sk.importMainWithBody("<stdin>", false, code, true);
+    }).then(
+      function(){ finish({hadError:false, output:outBuf, errorText:null}); },
+      function(err){
+        const d = document.createElement("div");
+        d.className = "err";
+        const msg = err.toString();
+        d.textContent = msg;
+        termEl.appendChild(d);
+        finish({hadError:true, output:outBuf, errorText:msg});
+      }
+    );
+  }catch(err){
+    const d = document.createElement("div");
+    d.className = "err";
+    const msg = String(err);
+    d.textContent = msg;
+    termEl.appendChild(d);
+    finish({hadError:true, output:outBuf, errorText:msg});
+  }
+}
+
+/* ---------- auto-grade from a Run ---------- */
+function extractNumbers(s){ return (String(s).match(/-?\d+(?:\.\d+)?/g)||[]).map(Number); }
+function normBlob(s){ return String(s).toLowerCase().replace(/\s+/g,"").replace(/['"]/g,""); }
+function outputMatches(q, stdout){
+  const blob = normBlob(stdout);
+  if(q.type==="number"){
+    const nums = extractNumbers(stdout);
+    return nums.length>0 && nums.every(n=>n===q.answer);
+  }
+  if(q.type==="text"){
+    return (q.answer||[]).some(a=>blob.includes(norm(a)));
+  }
+  if(q.type==="list"){
+    return (q.answer||[]).every(a=>blob.includes(norm(a)));
+  }
+  if(q.type==="contains"){
+    return (q.mustContain||[]).every(part=>blob.includes(part));
+  }
+  if(q.type==="dict"){
+    const pairs = {};
+    const re = /['"]?(\w+)['"]?\s*:\s*(-?\d+)/g;
+    let m;
+    while((m = re.exec(stdout))){ pairs[m[1].toLowerCase()] = Number(m[2]); }
+    const expectedKeys = Object.keys(q.answer||{});
+    return expectedKeys.length>0 && expectedKeys.every(k=>pairs[k.toLowerCase()]===q.answer[k]) && Object.keys(pairs).length===expectedKeys.length;
+  }
+  return false;
+}
+function codeMatches(q, code){
+  const blob = normBlob(code);
+  return (q.mustContain||[]).every(part=>blob.includes(part));
+}
+function autoGradeFromRun(q, main, ta, result){
+  try{
+    const runFb = main.querySelector("#run-feedback");
+    if(!runFb) return;
+    runFb.classList.remove("show","ok","bad");
+
+    if(result.hadError){
+      runFb.classList.add("show","bad");
+      runFb.innerHTML = '<span class="fb-title">Error — read the traceback above.</span>' + esc(q.hint||"Re-check the logic and run again.") + ' <span style="opacity:.7;">(The full approach is in the panel on the left.)</span>';
+      return;
+    }
+    if(!q.autoGrade || q.type==="mcq") return;
+
+    // Non-committal preview only — this does NOT mark the question done or advance you.
+    // Real grading (and history) still happens via "Check answer" on the left, so you
+    // always have to commit to a prediction instead of just watching fixed code run.
+    const ok = q.autoGrade==="code" ? codeMatches(q, ta.value) : outputMatches(q, result.output);
+    if(ok){
+      runFb.classList.add("show","ok");
+      runFb.innerHTML = '<span class="fb-title">Output looks right.</span>Type your prediction on the left and hit Check answer to lock it in.';
+    } else {
+      runFb.classList.add("show","bad");
+      runFb.innerHTML = '<span class="fb-title">Ran fine, but that output doesn\'t look like the target yet.</span>' + esc(q.hint||"Re-check the logic above.");
+    }
+  }catch(err){
+    console.error("autoGradeFromRun failed for", q && q.id, err);
+  }
+}
+function syncGutter(ta, gutter){
+  const lines = ta.value.split("\n").length;
+  let out = "";
+  for(let i=1;i<=lines;i++) out += i + "\n";
+  gutter.textContent = out;
+  gutter.scrollTop = ta.scrollTop;
+}
+
+const AUTO_PAIRS = {"(":")","[":"]","{":"}",'"':'"',"'":"'"};
+const AUTO_CLOSERS = new Set(Object.values(AUTO_PAIRS));
+function wireEditorKeys(ta, gutter){
+  ta.addEventListener("input", ()=>syncGutter(ta, gutter));
+  ta.addEventListener("scroll", ()=>{ gutter.scrollTop = ta.scrollTop; });
+  ta.addEventListener("keydown", e=>{
+    const start = ta.selectionStart, end = ta.selectionEnd, val = ta.value;
+
+    if(e.key === "Tab"){
+      e.preventDefault();
+      ta.value = val.slice(0,start) + "    " + val.slice(end);
+      ta.selectionStart = ta.selectionEnd = start + 4;
+      syncGutter(ta, gutter);
+      return;
+    }
+
+    if(e.key === "Enter"){
+      e.preventDefault();
+      const lineStart = val.lastIndexOf("\n", start-1) + 1;
+      const currentLine = val.slice(lineStart, start);
+      let indent = (currentLine.match(/^[ \t]*/) || [""])[0];
+      if(/:\s*$/.test(currentLine)) indent += "    ";
+      const insertion = "\n" + indent;
+      ta.value = val.slice(0,start) + insertion + val.slice(end);
+      ta.selectionStart = ta.selectionEnd = start + insertion.length;
+      syncGutter(ta, gutter);
+      return;
+    }
+
+    if(AUTO_CLOSERS.has(e.key) && start===end && val[start]===e.key){
+      e.preventDefault();
+      ta.selectionStart = ta.selectionEnd = start + 1;
+      return;
+    }
+
+    if(AUTO_PAIRS[e.key]){
+      e.preventDefault();
+      const open = e.key, close = AUTO_PAIRS[e.key];
+      if(start !== end){
+        const selected = val.slice(start,end);
+        ta.value = val.slice(0,start) + open + selected + close + val.slice(end);
+        ta.selectionStart = start + 1; ta.selectionEnd = end + 1;
+      } else {
+        ta.value = val.slice(0,start) + open + close + val.slice(end);
+        ta.selectionStart = ta.selectionEnd = start + 1;
+      }
+      syncGutter(ta, gutter);
+      return;
+    }
+
+    if(e.key === "Backspace" && start===end && start>0){
+      const before = val[start-1], after = val[start];
+      if(AUTO_PAIRS[before] === after){
+        e.preventDefault();
+        ta.value = val.slice(0,start-1) + val.slice(start+1);
+        ta.selectionStart = ta.selectionEnd = start - 1;
+        syncGutter(ta, gutter);
+      }
+    }
+  });
+}
+
+/* ---------- grading ---------- */
+function grade(q, container){
+  const fb = container.querySelector(".feedback");
+  if(!fb) return;
+  try{
+    let answered = true;
+    if(q.type==="mcq"){
+      answered = !!container.querySelector("input[type=radio]:checked");
+    } else {
+      const inputEl = container.querySelector("input");
+      answered = !!inputEl && inputEl.value.trim().length > 0;
+    }
+    if(!answered){
+      fb.classList.remove("ok","bad");
+      fb.classList.add("show","bad");
+      fb.innerHTML = '<span class="fb-title">Hold on.</span>' + esc(q.type==="mcq" ? "Pick an option first." : "Type an answer first.");
+      return;
+    }
+
+    let ok = false, answerText = "";
+    if(q.type==="number"){
+      const v = container.querySelector("input").value;
+      answerText = v;
+      ok = Number(v) === q.answer;
+    } else if(q.type==="text"){
+      const raw = container.querySelector("input").value;
+      answerText = raw;
+      ok = (q.answer||[]).map(norm).includes(norm(raw));
+    } else if(q.type==="list"){
+      const raw = container.querySelector("input").value;
+      answerText = raw;
+      const v = parseList(raw);
+      const expected = (q.answer||[]).map(norm);
+      ok = v.length===expected.length && v.every((x,i)=>x===expected[i]);
+    } else if(q.type==="contains"){
+      const raw = container.querySelector("input").value;
+      answerText = raw;
+      ok = (q.mustContain||[]).every(part=>norm(raw).includes(part));
+    } else if(q.type==="dict"){
+      const raw = container.querySelector("input").value;
+      answerText = raw;
+      const v = parseDict(raw);
+      const expectedKeys = Object.keys(q.answer||{});
+      ok = expectedKeys.every(k=>{
+        const vv = v[k.toLowerCase()];
+        return vv!==undefined && Number(vv)===q.answer[k];
+      }) && Object.keys(v).length===expectedKeys.length;
+    } else if(q.type==="mcq"){
+      const sel = container.querySelector("input[type=radio]:checked");
+      const idx = sel ? Number(sel.value) : -1;
+      answerText = (q.options && q.options[idx]) || "";
+      ok = !!sel && idx === q.answer;
+    }
+
+    recordAttempt(q.id, answerText, ok);
+
+    fb.classList.remove("ok","bad");
+    fb.classList.add("show", ok?"ok":"bad");
+    if(ok){
+      fb.innerHTML = '<span class="fb-title">Correct.</span>' + esc(q.memoryHook || "") +
+        ' <button class="btn primary" style="margin-left:8px; padding:5px 14px; font-size:12.5px; vertical-align:middle;" onclick="goRelative(1)">Next →</button>';
+      renderSidebar();
+      updateOverall();
+      const qview = container.closest(".qview");
+      const nextBtn = qview && qview.querySelector(".btn-next");
+      if(nextBtn) nextBtn.disabled = false;
+    } else {
+      fb.innerHTML = '<span class="fb-title">Not quite.</span>' + esc(q.hint || "Re-check the code above and try again.");
+    }
+  }catch(err){
+    fb.classList.remove("ok"); fb.classList.add("show","bad");
+    fb.innerHTML = '<span class="fb-title">Couldn\'t check that.</span>Something went wrong grading this — try again, or reveal the solution below.';
+    console.error("grade() failed for", q && q.id, err);
+  }
+}
+
+/* ---------- rendering ---------- */
+function goHome(){ navigateTo("intro"); }
+
+function render(){
+  try{
+    renderSidebar();
+    updateOverall();
+    const main = document.getElementById("main");
+    const q = getQ(currentId);
+    main.classList.toggle("wide", !!q);
+    if(q){ renderQuestion(main, q); }
+    else{ renderStatic(main, currentId); }
+  }catch(err){
+    console.error("render() failed", err);
+    renderCrashFallback(err);
+  }
+}
+function renderCrashFallback(err){
+  const main = document.getElementById("main");
+  if(!main) return;
+  main.classList.remove("wide");
+  main.innerHTML = `
+    <div class="panel" style="text-align:center; padding:48px 28px;">
+      <div class="panel-label" style="justify-content:center;">something glitched</div>
+      <p style="color:var(--ink-mute); margin:0 0 18px;">This question hit a snag rendering. Your progress is saved — head back home or pick a different one from the sidebar.</p>
+      <button class="btn primary" onclick="goHome()">Go home</button>
+    </div>
+  `;
+}
+function idxInFlat(id){ return FLAT_IDS.indexOf(id); }
+function goRelative(delta){
+  const i = idxInFlat(currentId);
+  const next = FLAT_IDS[i+delta];
+  if(next) navigateTo(next);
+}
+
+function renderQuestion(main, q){
+  const qNumber = QUESTIONS.findIndex(x=>x.id===q.id) + 1;
+  const ideBlock = q.runnable ? `
+      <div class="ide">
+        <div class="ide-head">
+          <span class="fname">solution.py</span>
+          <div class="ide-actions">
+            <button class="ide-btn" id="reset-btn" title="Restore the starting code">Reset</button>
+            <button class="ide-btn" id="clear-term-btn" title="Empty the editor and terminal">Clear</button>
+            <button class="run-btn" id="run-btn"><span class="tri"></span>Run</button>
+          </div>
+        </div>
+        <div class="editor-row">
+          <div class="gutter" id="gutter"></div>
+          <textarea class="editor" id="editor" spellcheck="false">${esc(q.runnable)}</textarea>
+        </div>
+        <div class="term" id="term"></div>
+      </div>
+      <div class="feedback" id="run-feedback"></div>
+      ${q.runNote? `<div class="run-note">${esc(q.runNote)}</div>` : ""}
+      ${q.runCaveat? `<div class="run-caveat">${esc(q.runCaveat)}</div>` : ""}
+      ${(!q.autoGrade && q.type!=="mcq")? `<div class="run-note">Run checks for errors only here — use "Check answer" on the left to validate this one.</div>` : ""}
+  ` : `<div class="cant-run"><b>Can't run in this sandbox:</b> ${esc(q.runNote||"")}</div>`;
+
+  main.innerHTML = `
+    <div class="qview">
+      <div class="eyebrow">
+        <span class="tag num">Q${String(qNumber).padStart(2,"0")} / ${QUESTIONS.length}</span>
+        <span class="tag mod">${esc(q.module)}</span>
+        ${q.hot? '<span class="tag hot">Frequently asked</span>' : ''}
+      </div>
+      <h2 class="qtitle">${esc(q.title)}</h2>
+
+      <div class="qgrid">
+        <div class="qleft">
+          <div class="panel approach">
+            <div class="panel-label"><span class="prompt">$</span> how to talk through it</div>
+            ${q.approach}
+          </div>
+
+          <div class="panel practice" id="practice-panel">
+            <div class="panel-label">validate before moving on</div>
+            <div class="q-prompt">${esc(q.prompt)}</div>
+            ${renderInput(q)}
+            <div class="btnrow">
+              <button class="btn primary" id="check-btn">Check answer</button>
+              <button class="btn ghost" id="reveal-btn">I'm stuck — reveal</button>
+            </div>
+            <div class="feedback"></div>
+          </div>
+
+          <details class="solution" id="sol-details">
+            <summary>Solution &amp; why it works</summary>
+            <div class="inner">
+              <pre class="code"><code>${hi(q.solution)}</code></pre>
+              <ul>${q.why.map(w=>`<li>${w}</li>`).join("")}</ul>
+            </div>
+          </details>
+
+          <div class="panel hook">
+            <div class="panel-label">how to remember this for life</div>
+            <p>${esc(q.memoryHook)}</p>
+          </div>
+        </div>
+
+        <div class="qright">
+          <details class="coderef">
+            <summary>Reference: code as it'd appear in the interview</summary>
+            <div class="inner"><pre class="code"><code>${hi(q.code)}</code></pre></div>
+          </details>
+
+          <div class="panel-label" style="margin-bottom:8px;"><span class="prompt">$</span> type it, run it, watch the output</div>
+          ${ideBlock}
+        </div>
+      </div>
+
+      <div class="navfoot">
+        <button class="btn ghost btn-prev" ${idxInFlat(q.id)===0? "disabled":""}>← Back</button>
+        <button class="btn primary btn-next" ${isDone(q.id)?"":"disabled"}>Next →</button>
+      </div>
+    </div>
+  `;
+
+  if(q.runnable){
+    const ta = main.querySelector("#editor");
+    const gutter = main.querySelector("#gutter");
+    const term = main.querySelector("#term");
+    syncGutter(ta, gutter);
+    wireEditorKeys(ta, gutter);
+
+    main.querySelector("#run-btn").onclick = ()=>{
+      try{
+        runInTerminal(ta.value, term, (result)=>autoGradeFromRun(q, main, ta, result));
+      }catch(err){ console.error("Run failed", err); showToast("Run didn't fire — try reloading the page."); }
+    };
+    const clearRunFeedback = ()=>{
+      const rf = main.querySelector("#run-feedback");
+      if(rf){ rf.classList.remove("show","ok","bad"); rf.innerHTML = ""; }
+    };
+    const resetBtn = main.querySelector("#reset-btn");
+    if(resetBtn) resetBtn.onclick = ()=>{
+      try{
+        ta.value = q.runnable;
+        syncGutter(ta, gutter);
+        term.textContent = "";
+        clearRunFeedback();
+        ta.focus();
+        showToast("Editor reset to the starting code.");
+      }catch(err){ console.error("Reset failed", err); showToast("Reset didn't fire — try reloading the page."); }
+    };
+    const clearBtn = main.querySelector("#clear-term-btn");
+    if(clearBtn) clearBtn.onclick = ()=>{
+      try{
+        ta.value = "";
+        syncGutter(ta, gutter);
+        term.textContent = "";
+        clearRunFeedback();
+        ta.focus();
+        showToast("Editor and terminal cleared.");
+      }catch(err){ console.error("Clear failed", err); showToast("Clear didn't fire — try reloading the page."); }
+    };
+  }
+
+  const panel = main.querySelector("#practice-panel");
+  main.querySelector("#check-btn").onclick = ()=>grade(q, panel);
+  main.querySelector("#reveal-btn").onclick = ()=>{ main.querySelector("#sol-details").open = true; };
+  main.querySelector(".btn-prev").onclick = ()=>goRelative(-1);
+  main.querySelector(".btn-next").onclick = ()=>goRelative(1);
+  const inputEl = panel.querySelector("input[type=text],input[type=number]");
+  if(inputEl){ inputEl.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); grade(q,panel);} }); }
+}
+
+function renderInput(q){
+  if(q.type==="mcq"){
+    return q.options.map((opt,i)=>`
+      <label class="mcq-opt">
+        <input type="radio" name="mcq" value="${i}">
+        <span>${esc(opt)}</span>
+      </label>`).join("");
+  }
+  const inputType = q.type==="number" ? "number" : "text";
+  return `<input type="${inputType}" placeholder="Type your answer here...">`;
+}
+
+function renderStatic(main, id){
+  if(id==="intro") return renderIntro(main);
+  if(id==="cheatsheet") return renderCheatsheet(main);
+  if(id==="tools") return renderTools(main);
+  if(id==="history") return renderHistory(main);
+}
+
+function renderHistory(main){
+  const rows = QUESTIONS.map(q=>{
+    const p = progress[q.id];
+    return {q, p};
+  });
+  const attempted = rows.filter(r=>r.p && r.p.attempts);
+  const wrongOnly = attempted.filter(r=>!isDone(r.q.id));
+
+  const rowHtml = (r)=>{
+    const {q,p} = r;
+    const statusBadge = isDone(q.id)
+      ? '<span class="tag" style="color:var(--primary-deep); background:var(--primary-subdued); border-color:transparent;">done</span>'
+      : (p && p.attempts ? '<span class="tag" style="color:var(--ruby-deep); background:var(--ruby-tint); border-color:transparent;">struggling</span>' : '<span class="tag">not started</span>');
+    const lastAns = p && p.lastAnswer ? esc(String(p.lastAnswer).slice(0,80)) : '<span style="color:var(--ink-faint);">—</span>';
+    const attempts = p ? (p.attempts||0) : 0;
+    return `<tr>
+      <td>${statusBadge}</td>
+      <td>${esc(q.title)}</td>
+      <td class="tnum">${attempts}</td>
+      <td class="mono" style="font-size:12.5px;">${lastAns}</td>
+      <td><button class="btn ghost" style="padding:6px 14px; font-size:12.5px;" onclick="navigateTo('${q.id}')">Open</button></td>
+    </tr>`;
+  };
+
+  main.innerHTML = `
+    <div class="eyebrow"><span class="tag mod">review</span></div>
+    <h2 class="qtitle">Your attempt history</h2>
+    <div class="kv" style="margin-bottom:22px;">
+      <div class="cell"><div class="n tnum">${doneCount()} / ${QUESTIONS.length}</div><div class="l">completed correctly</div></div>
+      <div class="cell"><div class="n tnum">${wrongOnly.length}</div><div class="l">attempted but not yet right — review these first</div></div>
+    </div>
+    ${wrongOnly.length ? `
+    <div class="panel">
+      <div class="panel-label">still worth another pass</div>
+      <div class="wrap-table">
+        <table class="tools">
+          <tr><th>status</th><th>question</th><th>attempts</th><th>your last answer</th><th></th></tr>
+          ${wrongOnly.map(rowHtml).join("")}
+        </table>
+      </div>
+    </div>` : (attempted.length ? `
+    <div class="panel"><div class="panel-label">nice</div><p style="color:var(--ink-mute); margin:0;">Everything you've attempted so far is correct. Keep going through the rest.</p></div>
+    ` : "")}
+    <div class="panel">
+      <div class="panel-label">full log</div>
+      <div class="wrap-table">
+        <table class="tools">
+          <tr><th>status</th><th>question</th><th>attempts</th><th>your last answer</th><th></th></tr>
+          ${rows.map(rowHtml).join("")}
+        </table>
+      </div>
+    </div>
+    <div class="navfoot" style="justify-content:flex-end;">
+      <button class="btn ghost" id="reset-progress-btn">Reset all progress</button>
+    </div>
+  `;
+  main.querySelector("#reset-progress-btn").onclick = ()=>{
+    if(confirm("Clear all saved progress and answer history? This can't be undone.")){
+      progress = {};
+      saveProgress();
+      render();
+    }
+  };
+}
+
+function renderIntro(main){
+  main.innerHTML = `
+    <div class="mesh-hero">
+      <div class="hero">
+        <div class="eyebrow"><span class="tag mod">start here</span></div>
+        <h1>Tonight, before the interview</h1>
+        <p class="sub">You know bash. This drill exists to translate what you already know into the Python shapes DevOps screens actually ask for — ${QUESTIONS.length} exercises, grouped, each with a talk-track, a real editable code panel you can run, and an instant self-check.</p>
+      </div>
+    </div>
+    <div class="kv" style="margin-top:-38px; position:relative; z-index:1; margin-bottom:26px;">
+      <div class="cell"><div class="n tnum">${QUESTIONS.length}</div><div class="l">exercises, grouped by topic</div></div>
+      <div class="cell"><div class="n tnum">${QUESTIONS.filter(q=>q.runnable).length}</div><div class="l">of them you can actually run right here</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">how this works</div>
+      <ol class="steps">
+        <li><strong>Read "how to talk through it"</strong> — the plain-English + bash-analogy script for saying the answer out loud, not just writing code.</li>
+        <li><strong>Type it, run it</strong> — most exercises have a real editable code panel and a Run button that executes actual Python in your browser (via Skulpt) and prints real output or a real traceback below it.</li>
+        <li><strong>Validate</strong> — type what you observed / what you'd say the answer is, or pick the right option. Check (or press Enter).</li>
+        <li>Get instant feedback with a specific hint if you're wrong. Stuck? Reveal the solution — <strong>Next</strong> unlocks once you've got it right.</li>
+        <li>Every question ends with a one-line <strong>memory hook</strong> — that's the sentence to actually retain, not the whole code block.</li>
+      </ol>
+    </div>
+
+    <div class="panel approach">
+      <div class="panel-label"><span class="prompt">$</span> the 5-question framework</div>
+      <p>Whenever you're handed Python code you didn't write — which is most of a DevOps interview — run it through these 5 questions before saying anything:</p>
+      <ol class="steps">
+        <li>What <strong>object</strong> am I looking at?</li>
+        <li>What <strong>data</strong> does it hold?</li>
+        <li>Is this a <strong>list</strong> or a <strong>dictionary</strong>?</li>
+        <li>Am I reading an <strong>attribute</strong> (<code>.something</code>) or a <strong>key</strong> (<code>["something"]</code>)?</li>
+        <li>What's the <strong>final method or action</strong> being called?</li>
+      </ol>
+      <p>Answer those five and you can narrate almost any snippet an interviewer throws at you, even ones you've never seen — that's what they're actually testing.</p>
+    </div>
+
+    <div class="navfoot" style="justify-content:flex-end;">
+      <button class="btn primary" id="start-btn">Start with Q01 →</button>
+    </div>
+  `;
+  main.querySelector("#start-btn").onclick = ()=>navigateTo(QUESTIONS[0].id);
+}
+
+function renderCheatsheet(main){
+  const groupsForCheck = ["Variables & data types","Strings & split()","Lists, tuples, sets","Dictionaries & .get()","Loops & if/elif","Functions & return","File handling (open/with)","JSON (load vs loads)","YAML (yaml.safe_load)","try/except","Classes, self, __init__","Inheritance","*args / **kwargs","Decorators","Context managers (with, __enter__/__exit__)","os / sys / subprocess","argparse","logging vs print","requests & response.json()","Regex basics (\\d, ., *, +)"];
+  main.innerHTML = `
+    <div class="eyebrow"><span class="tag mod">reference</span></div>
+    <h2 class="qtitle">Cheat sheet</h2>
+    <div class="panel">
+      <div class="panel-label">if you can talk through all of these, you're ready</div>
+      <ul class="plain">${groupsForCheck.map(g=>`<li>${esc(g)}</li>`).join("")}</ul>
+    </div>
+    <div class="panel approach">
+      <div class="panel-label"><span class="prompt">$</span> if the interviewer shows you code you've never seen</div>
+      <p>Don't freeze. Say the 5-question framework out loud, one at a time, even slowly — narrating your reasoning <em>is</em> the answer they're scoring, not just the final line of code.</p>
+    </div>
+    <div class="panel">
+      <div class="panel-label">quick module reminders</div>
+      <div class="wrap-table">
+      <table class="tools">
+        <tr><th>bash</th><th>python</th></tr>
+        <tr><td>grep -c PATTERN file</td><td>loop + <code>if "PATTERN" in line</code> + counter</td></tr>
+        <tr><td>pwd</td><td><code>os.getcwd()</code></td></tr>
+        <tr><td>ls</td><td><code>os.listdir()</code></td></tr>
+        <tr><td>$1, $2, $@</td><td><code>sys.argv[1]</code>, <code>sys.argv[2]</code>, <code>sys.argv</code></td></tr>
+        <tr><td>echo $VAR</td><td><code>os.getenv("VAR")</code></td></tr>
+        <tr><td>$(some command)</td><td><code>subprocess.run([...], capture_output=True, text=True)</code></td></tr>
+        <tr><td>curl url | jq</td><td><code>requests.get(url).json()</code></td></tr>
+        <tr><td>sort | uniq -c</td><td><code>dict.get(key, 0) + 1</code> counting loop</td></tr>
+      </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderTools(main){
+  main.innerHTML = `
+    <div class="eyebrow"><span class="tag mod">reference</span></div>
+    <h2 class="qtitle">Where to actually run Python</h2>
+    <div class="panel approach">
+      <div class="panel-label"><span class="prompt">$</span> honest note</div>
+      <p>Most exercises in this drill now have a real, editable "type it, run it" panel powered by Skulpt, a Python-in-the-browser engine — that's genuine code execution, not a canned animation. It covers core syntax well but isn't a byte-for-byte match to real CPython (regex and some formatting edge cases can differ) — treat a surprising mismatch as a sandbox quirk, not necessarily your bug.</p>
+      <p>A few topics can't run here at all on principle: <code>subprocess</code>, <code>requests</code>, real filesystem calls, <code>argparse</code> (needs a real command line), <code>logging</code>, and <code>yaml</code> (not part of core Python) need something a browser sandbox intentionally withholds. Those are marked "can't run in this sandbox" with the reason — reason through them instead, and confirm for real using one of these:</p>
+    </div>
+    <div class="panel">
+      <div class="wrap-table">
+      <table class="tools">
+        <tr><th>tool</th><th>best for</th></tr>
+        <tr><td><a href="https://www.kodekloud.com" target="_blank" rel="noopener">KodeKloud</a></td><td>Real hands-on labs with a live terminal — closest to actual DevOps tasks (kubectl, servers, CI). Best for the subprocess/requests exercises this page can't run.</td></tr>
+        <tr><td><a href="https://www.programiz.com/python-programming/online-compiler" target="_blank" rel="noopener">Programiz online compiler</a></td><td>Zero setup, real CPython. Use this to double-check anything Skulpt handled oddly, or the regex exercises.</td></tr>
+        <tr><td><a href="https://colab.research.google.com" target="_blank" rel="noopener">Google Colab</a></td><td>Free notebook environment for the <code>requests</code> example with a real network call.</td></tr>
+        <tr><td><a href="https://replit.com" target="_blank" rel="noopener">Replit</a></td><td>Full project environment if you want to build the combined kubectl + json script as a real multi-file project.</td></tr>
+      </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">suggested order for tonight</div>
+      <ol class="steps">
+        <li>Go through all the exercises here first — run each one, then validate. The talk-track + memory hook is what actually gets scored in a screen.</li>
+        <li>For the ones marked "can't run in this sandbox," reason through them here, then confirm for real on KodeKloud or Colab if you have time.</li>
+        <li>If anything Skulpt ran looked wrong or surprising, re-run it in Programiz to see real CPython's answer before you trust it.</li>
+      </ol>
+    </div>
+  `;
+}
+
+/* ---------- global safety net ---------- */
+let toastTimer = null;
+function showToast(msg){
+  let t = document.getElementById("toast");
+  if(!t){
+    t = document.createElement("div");
+    t.id = "toast";
+    t.style.cssText = "position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:11px 20px; border-radius:var(--pill); font-size:13.5px; box-shadow:var(--shadow-2); z-index:999; max-width:90vw; text-align:center;";
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.display = "block";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.style.display = "none"; }, 4000);
+}
+window.addEventListener("error", (e)=>{
+  console.error("Uncaught error:", e.error || e.message);
+  showToast("Something glitched, but your progress is safe. Try again, or go Home.");
+});
+window.addEventListener("unhandledrejection", (e)=>{
+  console.error("Unhandled promise rejection:", e.reason);
+  showToast("Something glitched, but your progress is safe. Try again, or go Home.");
+});
+
+/* ---------- boot ---------- */
+try{
+  render();
+}catch(err){
+  console.error("Initial render failed", err);
+  renderCrashFallback(err);
+}
+</script>
+
+</html>

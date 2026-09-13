@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: python-devops-drill
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/prnvdas/python-devops-drill.git
+    targetRevision: main
+    path: helm/python-devops-drill
+    helm:
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+
+  syncPolicy:
+    automated:
+      prune: true      # remove resources that are no longer in git
+      selfHeal: true    # revert any manual/out-of-band cluster changes back to match git
+    syncOptions:
+      - CreateNamespace=true
