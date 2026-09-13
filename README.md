@@ -26,6 +26,35 @@ index.html  →  Docker image  →  Docker Hub  →  Helm chart  →  ArgoCD  �
   no manual deploys: push to `main`, ArgoCD picks up the new chart/values within its
   sync interval (default 3 min, or immediately via a manual sync).
 
+## Cluster setup (kind + Calico)
+
+The cluster this currently runs on is a local `kind` cluster, defined in
+`kind-cluster.yaml`: 1 control-plane + 2 workers, default CNI disabled in favor
+of **Calico** (kind's default CNI doesn't enforce `NetworkPolicy` at all — Calico
+does), and ports 80/443 published on the control-plane node at cluster-creation
+time so `http://localhost/` works with zero `kubectl port-forward`.
+
+To recreate it from scratch:
+```bash
+kind create cluster --config kind-cluster.yaml
+
+# Calico (NetworkPolicy enforcement)
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+kubectl wait --for=condition=Ready nodes --all --timeout=180s
+
+# ingress-nginx (kind's dedicated manifest)
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+
+# REQUIRED FIX: the upstream manifest above only *tolerates* the control-plane
+# taint, it doesn't *require* landing there — with untainted worker nodes also
+# available, the scheduler may place the ingress pod on a worker instead. Since
+# ingress-nginx binds via hostPort (not a Service), it only works on the exact
+# node whose Docker container has 80/443 published — which is only the
+# control-plane node here. Force it explicitly:
+kubectl patch deployment ingress-nginx-controller -n ingress-nginx --type='json' \
+  -p='[{"op":"add","path":"/spec/template/spec/nodeSelector/ingress-ready","value":"true"}]'
+```
+
 ## One-time setup (things only you can do)
 
 1. **Docker Hub secrets** — in this repo's GitHub Settings → Secrets and variables →
@@ -33,10 +62,15 @@ index.html  →  Docker image  →  Docker Hub  →  Helm chart  →  ArgoCD  �
    - `DOCKERHUB_USERNAME`
    - `DOCKERHUB_TOKEN` (an access token, not your password — Docker Hub →
      Account Settings → Security → New Access Token)
-2. **Apply the ArgoCD Application** to your cluster once ArgoCD is installed:
+2. **Install ArgoCD**, then **apply the ArgoCD Application**:
    ```
+   kubectl create namespace argocd
+   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side --force-conflicts
    kubectl apply -f argocd/application.yaml
    ```
+   (`--server-side` avoids a known `kubectl apply` failure where ArgoCD's
+   `applicationsets.argoproj.io` CRD exceeds the `kubectl.kubernetes.io/last-applied-configuration`
+   annotation size limit.)
 
 ## Local development (no ArgoCD/registry involved)
 
@@ -60,8 +94,8 @@ Not built yet, listed here so the direction is explicit rather than implied:
   step) instead of `:latest`, so deployments are pinned to an exact, auditable SHA.
 - **Observability**: Prometheus + Grafana (or just nginx access log shipping) so
   the "production" instance has real metrics, not just a readiness probe.
-- **Ingress + TLS**: an actual ingress controller + cert-manager instead of
-  NodePort/port-forward, if this ever leaves localhost.
+- **TLS**: ingress-nginx is in place, but it's plain HTTP — cert-manager +
+  a real (or self-signed) cert if this ever leaves localhost.
 - **Infra as code**: if this moves to a real cloud cluster, Terraform for the
   cluster itself, so "click ArgoCD install script" isn't a manual step either.
 - **Branch protection + PR review**: require the CI workflow to pass before merge.
