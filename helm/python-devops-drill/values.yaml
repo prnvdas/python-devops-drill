@@ -12,7 +12,7 @@ service:
 
 ingress:
   enabled: true
-  className: nginx
+  className: traefik
   annotations: {}
 
 resources:
