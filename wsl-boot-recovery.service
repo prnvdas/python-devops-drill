@@ -1,0 +1,15 @@
+[Unit]
+Description=Recover kind cluster and ArgoCD access after WSL boot
+After=docker.service network-online.target
+Wants=docker.service network-online.target
+
+[Service]
+Type=oneshot
+User=pranav
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="HOME=/home/pranav"
+ExecStart=/bin/bash /mnt/c/PythonForDevopsInterviewPrep/wsl-boot-recovery.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
