@@ -31,4 +31,4 @@ kubectl get pods -A | grep -v "Running\|Completed" || echo "Everything Running/C
 
 echo ""
 echo "Site check:"
-curl -s -o /dev/null -w "http://localhost/ -> HTTP %{http_code}\n" http://localhost/
+curl -s -o /dev/null -w "http://pythonfordevops.local/ -> HTTP %{http_code}\n" -H "Host: pythonfordevops.local" http://localhost/

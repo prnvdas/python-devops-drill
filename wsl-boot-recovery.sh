@@ -66,6 +66,6 @@ disown
 
 sleep 2
 echo "Final check:"
-curl -s -o /dev/null -w "App  (http://localhost/)        -> HTTP %{http_code}\n" http://localhost/
+curl -s -o /dev/null -w "App  (http://pythonfordevops.local/) -> HTTP %{http_code}\n" -H "Host: pythonfordevops.local" http://localhost/
 curl -sk -o /dev/null -w "ArgoCD (https://127.0.0.1:8081/) -> HTTP %{http_code}\n" https://127.0.0.1:8081/
 echo "=== done ==="

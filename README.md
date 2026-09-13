@@ -55,6 +55,17 @@ kubectl patch deployment ingress-nginx-controller -n ingress-nginx --type='json'
   -p='[{"op":"add","path":"/spec/template/spec/nodeSelector/ingress-ready","value":"true"}]'
 ```
 
+## Accessing the app
+
+The Ingress routes by hostname (`pythonfordevops.local`), not `localhost`, so it can
+sit on the same ingress-nginx controller as ArgoCD's own `argocd.local` without the
+two colliding. Add this line to your **Windows** hosts file
+(`C:\Windows\System32\drivers\etc\hosts`, edited as Administrator):
+```
+127.0.0.1 pythonfordevops.local
+```
+Then open `http://pythonfordevops.local/`.
+
 ## One-time setup (things only you can do)
 
 1. **Docker Hub secrets** — in this repo's GitHub Settings → Secrets and variables →
