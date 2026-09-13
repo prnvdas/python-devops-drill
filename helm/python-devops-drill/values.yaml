@@ -6,9 +6,14 @@ image:
   pullPolicy: Always
 
 service:
-  type: NodePort
+  type: ClusterIP
   port: 80
   targetPort: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
 
 resources:
   requests:
