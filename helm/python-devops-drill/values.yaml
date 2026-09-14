@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: prnvdas/python-devops-drill
-  tag: 6d51ca1263b77fda367fcbde07e1762368abb266
+  tag: 667120673bb73d7fc7c8f8a2b5261f359be3e9f1
   pullPolicy: IfNotPresent
 
 service:
