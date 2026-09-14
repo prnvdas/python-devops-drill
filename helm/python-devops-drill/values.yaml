@@ -2,8 +2,8 @@ replicaCount: 1
 
 image:
   repository: prnvdas/python-devops-drill
-  tag: latest
-  pullPolicy: Always
+  tag: 73d659fb218788a70aa7d4aa9a465bffa3fc86f6
+  pullPolicy: IfNotPresent
 
 service:
   type: ClusterIP

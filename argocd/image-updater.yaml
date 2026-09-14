@@ -1,0 +1,25 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: python-devops-drill
+  namespace: argocd
+spec:
+  applicationRefs:
+    - namePattern: "python-devops-drill"
+      images:
+        - alias: app
+          imageName: "prnvdas/python-devops-drill"
+          manifestTargets:
+            helm:
+              name: "image.repository"
+              tag: "image.tag"
+      commonUpdateSettings:
+        updateStrategy: "newest-build"
+        allowTags: "regexp:^[0-9a-f]{40}$"
+        ignoreTags: ["latest"]
+      writeBackConfig:
+        method: "git:secret:git-creds"
+        gitConfig:
+          repository: "https://github.com/prnvdas/python-devops-drill.git"
+          branch: "main"
+          writeBackTarget: "helmvalues:/helm/python-devops-drill/values.yaml"

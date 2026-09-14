@@ -25,6 +25,14 @@ index.html  →  Docker image  →  Docker Hub  →  Helm chart  →  ArgoCD  �
   reconciles the live cluster to match what's committed here. No `kubectl apply`,
   no manual deploys: push to `main`, ArgoCD picks up the new chart/values within its
   sync interval (default 3 min, or immediately via a manual sync).
+- **argocd/image-updater.yaml** — an `ImageUpdater` resource (ArgoCD Image Updater
+  v1.3.0) that polls Docker Hub every 2 minutes for new `prnvdas/python-devops-drill`
+  tags matching a 40-char git-sha, and commits the newest one straight into
+  `helm/python-devops-drill/values.yaml` on `main`. This is what actually closes the
+  loop: `values.yaml` is pinned to an exact commit SHA (not `:latest`), so a fresh
+  image with no matching new commit here would otherwise just sit on Docker Hub
+  unused — Image Updater is the thing that notices and writes the bump, and ArgoCD's
+  own `selfHeal` picks that commit up like any other.
 
 ## Cluster setup (kind + Calico)
 
@@ -82,6 +90,20 @@ Then open `http://pythonfordevops.local/`.
    (`--server-side` avoids a known `kubectl apply` failure where ArgoCD's
    `applicationsets.argoproj.io` CRD exceeds the `kubectl.kubernetes.io/last-applied-configuration`
    annotation size limit.)
+3. **Install ArgoCD Image Updater**, create its git write-back credential, then
+   apply the `ImageUpdater` resource:
+   ```
+   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/v1.3.0/config/install.yaml
+
+   # A GitHub Personal Access Token (classic, "repo" scope) — create at
+   # https://github.com/settings/tokens — is what lets it push commits back here.
+   kubectl create secret generic git-creds \
+     --namespace argocd \
+     --from-literal=username=<your-github-username> \
+     --from-literal=password=<your-token>
+
+   kubectl apply -f argocd/image-updater.yaml
+   ```
 
 ## Local development (no ArgoCD/registry involved)
 
@@ -101,8 +123,6 @@ Not built yet, listed here so the direction is explicit rather than implied:
   the build on high/critical CVEs in the base image.
 - **Multiple environments**: split `values.yaml` into `values-dev.yaml` /
   `values-prod.yaml`, and either two ArgoCD Applications or an ArgoCD ApplicationSet.
-- **Image tag automation**: ArgoCD Image Updater (or Argo CD + a bump-version PR
-  step) instead of `:latest`, so deployments are pinned to an exact, auditable SHA.
 - **Observability**: Prometheus + Grafana (or just nginx access log shipping) so
   the "production" instance has real metrics, not just a readiness probe.
 - **TLS**: ingress-nginx is in place, but it's plain HTTP — cert-manager +
