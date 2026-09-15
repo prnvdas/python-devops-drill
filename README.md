@@ -20,11 +20,23 @@ index.html  →  Docker image  →  Docker Hub  →  Helm chart  →  ArgoCD  �
   Docker Hub as `prnvdas/python-devops-drill:latest` and `:<git-sha>`.
 - **helm/python-devops-drill/** — the Helm chart (Deployment + Service), parameterized
   via `values.yaml` (image repo/tag, replica count, resource limits, probes).
-- **argocd/application.yaml** — an ArgoCD `Application` pointing at this repo's Helm
-  chart with `automated: {prune: true, selfHeal: true}` — ArgoCD continuously
-  reconciles the live cluster to match what's committed here. No `kubectl apply`,
-  no manual deploys: push to `main`, ArgoCD picks up the new chart/values within its
-  sync interval (default 3 min, or immediately via a manual sync).
+- **argocd/apps/python-devops-drill-application.yaml** — an ArgoCD `Application`
+  pointing at this repo's Helm chart with `automated: {prune: true, selfHeal: true}` —
+  ArgoCD continuously reconciles the live cluster to match what's committed here. No
+  `kubectl apply`, no manual deploys: push to `main`, ArgoCD picks up the new
+  chart/values within its sync interval (default 3 min, or immediately via a manual
+  sync).
+- **argocd/root-application.yaml** + **argocd/apps/** — an app-of-apps: the root
+  `Application` manages every other `Application` in this repo from one place, each
+  ordered by an `argocd.argoproj.io/sync-wave` annotation (see "Platform" below).
+- **helm/postgres/** — a StatefulSet Postgres (wave 1) backing the platform's
+  microservices, with two logical databases (`progress`, `stats`) created on first
+  boot, matching database-per-service ownership even though they share one instance.
+- **Kafka** — installed natively on the WSL2 host itself (JDK 21 + Kafka 4.3.1
+  binaries + a systemd unit), *not* inside the cluster. The kind node containers reach
+  it at `172.18.0.1:9092` (the kind Docker network's gateway IP). This was a
+  deliberate choice over an in-cluster Strimzi operator, for the fun of running real
+  Kafka by hand outside Kubernetes — see `~/kafka/kafka.service` on the host.
 - **argocd/image-updater.yaml** — an `ImageUpdater` resource (ArgoCD Image Updater
   v1.3.0) that polls Docker Hub every 2 minutes for new `prnvdas/python-devops-drill`
   tags matching a 40-char git-sha, and commits the newest one straight into
@@ -81,15 +93,24 @@ Then open `http://pythonfordevops.local/`.
    - `DOCKERHUB_USERNAME`
    - `DOCKERHUB_TOKEN` (an access token, not your password — Docker Hub →
      Account Settings → Security → New Access Token)
-2. **Install ArgoCD**, then **apply the ArgoCD Application**:
+2. **Install ArgoCD**, then **apply the root Application** (the one bootstrap
+   `kubectl apply` this project ever needs — everything else, including every other
+   Application, is managed from here via the app-of-apps pattern):
    ```
    kubectl create namespace argocd
    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml --server-side --force-conflicts
-   kubectl apply -f argocd/application.yaml
+   kubectl apply -f argocd/root-application.yaml
    ```
    (`--server-side` avoids a known `kubectl apply` failure where ArgoCD's
    `applicationsets.argoproj.io` CRD exceeds the `kubectl.kubernetes.io/last-applied-configuration`
    annotation size limit.)
+
+   `argocd/root-application.yaml` points at the `argocd/apps/` directory in this repo —
+   every file in there is a child `Application`, each carrying an
+   `argocd.argoproj.io/sync-wave` annotation so ArgoCD applies them in dependency
+   order (e.g. `postgres-application.yaml` at wave 1, before the app services that
+   need it). Adding a new component to the platform means adding a new file to
+   `argocd/apps/`, not a new manual `kubectl apply`.
 3. **Install ArgoCD Image Updater**, create its git write-back credential, then
    apply the `ImageUpdater` resource:
    ```

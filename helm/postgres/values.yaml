@@ -1,0 +1,26 @@
+image:
+  repository: postgres
+  tag: 17-alpine
+  digest: sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
+
+auth:
+  username: appuser
+  # Lab-grade only: a real project would pull this from Sealed Secrets/Vault/SOPS,
+  # not a plaintext value committed to git. Tracked as a roadmap item in the README.
+  password: "devops-drill-lab-pw"
+
+databases:
+  - progress
+  - stats
+
+storage:
+  size: 1Gi
+  storageClassName: standard
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
